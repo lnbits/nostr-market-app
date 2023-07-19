@@ -67,7 +67,7 @@
                     <q-item-section avatar>
                       <q-avatar>
                         <img v-if="profile?.picture" :src="profile.picture" />
-                        <img v-else src="/nostrmarket/static/images/blank-avatar.webp" />
+                        <img v-else src="/images/blank-avatar.webp" />
                       </q-avatar>
                     </q-item-section>
                     <q-item-section class="q-mt-sm">
@@ -192,8 +192,12 @@
   </q-card>
 </template>
 
+
+
 <script>
+
 import { defineComponent } from 'vue'
+
 
 export default defineComponent({
   name: 'EssentialLink',
@@ -231,7 +235,7 @@ export default defineComponent({
   methods: {
     addMerchant: async function () {
       if (!isValidKey(this.merchantPubkey, 'npub')) {
-        this.$q.notify({
+        $q.notify({
           message: 'Invalid Public Key!',
           type: 'warning'
         })
@@ -248,7 +252,7 @@ export default defineComponent({
       const relayUrl = (this.relayUrl || '').trim()
       if (!relayUrl.startsWith('wss://') && !relayUrl.startsWith('ws://')) {
         this.relayUrl = null
-        this.$q.notify({
+        $q.notify({
           timeout: 5000,
           type: 'warning',
           message: `Invalid relay URL.`,
@@ -260,7 +264,7 @@ export default defineComponent({
         new URL(relayUrl);
         this.$emit('add-relay', relayUrl)
       } catch (error) {
-        this.$q.notify({
+        $q.notify({
           timeout: 5000,
           type: 'warning',
           message: `Invalid relay URL.`,
