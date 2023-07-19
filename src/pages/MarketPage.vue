@@ -1,5 +1,126 @@
 <template>
-  <q-page class="flex flex-center">
+  <q-page>
+    <div class="row q-mb-sm q-mt-md">
+      <div class="col-lg-2 col-md-1 col-sm-0"></div>
+      <div class="col-lg-8 col-md-10 col-sm-12 auto-width">
+        <div class="row q-mb-md q-pa-none">
+          <q-toolbar class="col-lg-1 col-md-1 col-sm-0 q-pl-none">
+            <q-avatar rounded size="64px" class="q-ma-none q-pa-none gt-sm">
+              <img v-if="logoImage" :src="logoImage">
+            </q-avatar>
+          </q-toolbar>
+          <q-toolbar class="col-lg-6 col-md-5 col-sm-12 auto-width">
+            <q-input class="rounded-pill" style="width:100%;" rounded outlined clearable v-model.trim="searchText"
+              label="Filter products, load market profile...">
+              <template v-slot:append>
+                <q-icon v-if="!searchText" name="search" />
+              </template>
+            </q-input>
+          </q-toolbar>
+          <q-toolbar class="col-lg-5 col-md-6 col-sm-12 q-ma-none">
+            <div class="float-right">
+              <q-btn color="gray" icon="travel_explore" flat size="lg"
+                @click="setActivePage('search-nostr')"><q-tooltip>Search
+                  for products on Nostr</q-tooltip></q-btn>
+              <q-btn color="gray" icon="settings" flat size="lg" @click="setActivePage('market-config')"><q-tooltip>
+                  Settings</q-tooltip></q-btn>
+              <q-btn v-if="account" @click="setActivePage('user-config')" color="gray" icon="perm_identity" flat
+                size="lg"><q-tooltip>User
+                  User Config</q-tooltip></q-btn>
+              <q-btn v-else @click="accountDialog.show = true" color="gray" icon="person_add" flat
+                size="lg"><q-tooltip>User
+                  Login</q-tooltip></q-btn>
+              <q-btn @click="setActivePage('user-chat')" color="gray" icon="chat" flat
+                size="lg"><q-tooltip>Chat</q-tooltip></q-btn>
+              <q-btn @click="setActivePage('customer-orders')" color="gray" icon="receipt_long" flat
+                size="lg"><q-tooltip>Orders</q-tooltip></q-btn>
+              <q-btn color="gray" icon="shopping_cart" dense round flat size="lg"
+                @click="setActivePage('shopping-cart-list')">
+                <q-tooltip>Shopping Cart</q-tooltip>
+
+                <q-badge v-if="allCartsItemCount" color="secondary" floating>
+                  <span v-text="allCartsItemCount"></span>
+                </q-badge>
+              </q-btn>
+            </div>
+
+          </q-toolbar>
+        </div>
+      </div>
+      <div class="col-lg-2 col-md-1 col-sm-0"></div>
+    </div>
+
+    <div class="row q-mb-sm">
+      <div class="col-lg-2 col-md-1 col-sm-0"></div>
+      <div class="col-lg-8 col-md-10 col-sm-12">
+
+        <div v-if="products?.length" class="gt-sm">
+          <q-virtual-scroll :items="allCategories" virtual-scroll-horizontal>
+            <template v-slot="{ item, index }">
+              <q-chip :key="index" :color="item.selected ? 'grey' : ''" class="cursor-pointer q-mb-md">
+                <span v-text="item.category" @click="toggleCategoryFilter(item.category)"></span>
+                <q-badge @click="toggleCategoryFilter(item.category)" rounded class="q-ml-sm" color="secondary"> <span
+                    v-text="item.count"></span></q-badge>
+              </q-chip>
+            </template>
+          </q-virtual-scroll>
+        </div>
+      </div>
+      <div class="col-lg-2 col-md-1 col-sm-0"></div>
+    </div>
+
+    <div v-if="isLoading" class="row q-mb-sm">
+      <div class="col-12 text-center"> <q-spinner-dots color="primary" size="xl" /></div>
+    </div>
+
+    <div class="row q-mb-sm">
+      <div class="col-lg-2 col-md-1 col-sm-0"></div>
+      <div class="col-lg-8 col-md-10 col-sm-12 auto-width">
+        <q-banner class="row q-pa-none q-mb-lg gt-sm shadow-2">
+          <q-img v-if="bannerImage" :src="bannerImage" class="rounded-borders" style="width: 100%; height: 250px" cover>
+            <div v-if="config?.opts?.about" class="absolute-bottom text-subtitle1 text-center">
+              <span v-text="config.opts.about"></span>
+            </div>
+          </q-img>
+        </q-banner>
+
+      </div>
+      <div class="col-lg-2 col-md-1 col-sm-0 auto-width"></div>
+    </div>
+
+    <div class="row q-mb-sm">
+      <div class="col-lg-2 col-md-1 col-sm-0"></div>
+      <div class="col-lg-7 col-md-9 col-sm-12 auto-width">
+
+        <q-breadcrumbs class="cursor q-mt-sm q-mr-sm">
+          <q-breadcrumbs-el :label="config?.opts?.name || 'Market'" icon="home" @click="navigateTo('market')"
+            class="cursor-pointer auto-width">
+            <q-checkbox v-model="groupByStall" v-if="activePage === 'market' && stalls?.length"
+              class="q-pl-md float-right" size="xs" val="xs" label="Group by stalls"></q-checkbox>
+
+          </q-breadcrumbs-el>
+          <q-breadcrumbs-el v-if="activePage === 'customer-stall'" :label="stallName"
+            @click="navigateTo('stall', { stall: activeStall })" icon="storefront"
+            class="cursor-pointer"></q-breadcrumbs-el>
+          <q-breadcrumbs-el v-if="activePage === 'customer-stall' && activeProduct" :label="productName"
+            class="cursor-pointer" icon="widgets"></q-breadcrumbs-el>
+          <q-breadcrumbs-el v-if="activePage === 'shopping-cart-list'" label="Shoping Cart"
+            icon="shopping_cart"></q-breadcrumbs-el>
+          <q-breadcrumbs-el v-if="activePage === 'customer-orders'" label="Orders" icon="receipt_long"></q-breadcrumbs-el>
+          <q-breadcrumbs-el v-if="activePage === 'market-config'" label="Settings" icon="settings"></q-breadcrumbs-el>
+          <q-breadcrumbs-el v-if="activePage === 'user-config'" label="User Config"
+            icon="perm_identity"></q-breadcrumbs-el>
+          <q-breadcrumbs-el v-if="activePage === 'user-chat'" label="User Chat" icon="chat"></q-breadcrumbs-el>
+        </q-breadcrumbs>
+
+
+      </div>
+      <div class="col-lg-1 col-md-1 col-sm-0 auto-width">
+        <q-btn v-if="activePage === 'customer-stall'" flat color="grey" icon="content_copy" @click="copyUrl()"
+          class="float-right"></q-btn>
+      </div>
+      <div class="col-lg-2 col-md-1 col-sm-0 auto-width"></div>
+    </div>
     <!-- <MarketConfig :merchants="merchants" :relays="relays" :config-ui="configUi" :read-notes="readNotes">
     </MarketConfig> -->
     <MarketConfig v-if="activePage === 'market-config'" :merchants="merchants" @add-merchant="addMerchant"
@@ -121,6 +242,7 @@ export default defineComponent({
         try {
           const { type, data } = NostrTools.nip19.decode(n)
           if (type !== 'naddr' || data.kind !== 30019) return
+          this.$q
           LNbits.utils
             .confirmDialog('Do you want to import this market profile?')
             .onOk(async () => {
@@ -406,7 +528,7 @@ export default defineComponent({
           return obj
         })
         .filter(p => p && (deleteEventsIds.indexOf(p.eventId)) === -1)
-      console.log('### this.products', this.products)
+      // console.log('### this.products', this.products)
     },
 
     async initNostr() {
@@ -527,7 +649,7 @@ export default defineComponent({
       })
     },
     getAmountFormated(amount, unit = 'USD') {
-      return LNbits.utils.formatCurrency(amount, unit)
+      return formatCurrency(amount, unit)
     },
 
     setActivePage(page = 'market') {
