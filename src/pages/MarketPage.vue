@@ -209,6 +209,8 @@ import MarketConfig from 'components/MarketConfig.vue'
 import UserConfig from 'components/UserConfig.vue'
 import UserChat from 'components/UserChat.vue'
 import ShoppingCartList from 'components/ShoppingCartList.vue'
+import ShoppingCartCheckout from 'components/ShoppingCartCheckout.vue'
+import CustomerMarket from 'components/CustomerMarket.vue'
 
 
 export default defineComponent({
@@ -234,7 +236,7 @@ export default defineComponent({
       checkoutCart: null,
       checkoutStall: null,
 
-      activePage: 'market-config',
+      activePage: '',
       activeOrderId: null,
       dmSubscriptions: {},
 
