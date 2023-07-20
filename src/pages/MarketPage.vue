@@ -265,6 +265,7 @@ import ShoppingCartCheckout from 'components/ShoppingCartCheckout.vue'
 import CustomerMarket from 'components/CustomerMarket.vue'
 import CustomerOrders from 'components/CustomerOrders.vue'
 import CustomerStall from 'components/CustomerStall.vue'
+import CustomerStallList from 'components/CustomerStallList.vue'
 
 
 export default defineComponent({
