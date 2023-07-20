@@ -195,6 +195,55 @@
     </div>
 
   </q-page>
+
+  <!-- ACCOUNT DIALOG -->
+  <q-dialog v-model="accountDialog.show" position="top">
+    <q-card>
+      <q-card-section class="row">
+        <div class="text-h6">Account Setup</div>
+        <q-space></q-space>
+      </q-card-section>
+      <q-card-section>
+        <p>Enter your Nostr private key or generate a new one.</p>
+      </q-card-section>
+
+      <q-card-section class="q-pt-none">
+        <q-input dense label="Nsec/Hex" v-model="accountDialog.data.key" autofocus @keyup.enter="createAccount"
+          :error="accountDialog.data.key && !isValidAccountKey" hint="Enter you private key"></q-input>
+      </q-card-section>
+
+      <q-card-actions align="right" class="text-primary">
+        <q-btn v-if="isValidAccountKey" label="Login" color="primary" @click="() => createAccount()"></q-btn>
+        <q-btn v-else flat label="Generate" @click="generateKeyPair"></q-btn>
+        <q-btn v-close-popup flat color="grey" class="q-ml-auto">Close</q-btn>
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+
+  <!-- INVOICE DIALOG -->
+  <q-dialog v-model="qrCodeDialog.show" position="top">
+    <q-card class="q-pa-lg q-pt-xl lnbits__dialog-card">
+      <div class="text-center q-mb-lg">
+        <div v-if="qrCodeDialog.data.message" class="q-my-lg">
+          <strong><span v-text="qrCodeDialog.data.message"></span> </strong>
+        </div>
+        <a v-else :href="'lightning:' + qrCodeDialog.data?.payment_request">
+          <q-responsive v-if="qrCodeDialog.data.payment_request" :ratio="1" class="q-mx-xl">
+            <qrcode :value="qrCodeDialog.data.payment_request" :options="{ width: 340 }" class="rounded-borders"></qrcode>
+          </q-responsive>
+          <div v-else>
+            <q-spinner color="primary" size="2.55em"></q-spinner>
+          </div>
+        </a>
+
+      </div>
+      <div class="row q-mt-lg">
+        <q-btn v-if="qrCodeDialog.data.payment_request" outline color="grey"
+          @click="copyText(qrCodeDialog.data.payment_request)">Copy invoice</q-btn>
+        <q-btn flat v-close-popup color="grey" class="q-ml-auto">Close</q-btn>
+      </div>
+    </q-card>
+  </q-dialog>
 </template>
 
 <script setup>

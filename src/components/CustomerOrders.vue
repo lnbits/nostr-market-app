@@ -11,7 +11,7 @@
           <q-item-section avatar>
             <q-avatar>
               <img v-if="merchant.profile?.picture" :src="merchant.profile?.picture">
-              <img v-else src="/nostrmarket/static/images/blank-avatar.webp">
+              <img v-else src="/images/blank-avatar.webp">
             </q-avatar>
           </q-item-section>
 
@@ -90,7 +90,7 @@
                         <q-avatar>
                           <img v-if="product.images && product.images[0] || product.image"
                             :src="product.images[0] || product.image" />
-                          <img v-else src="/nostrmarket/static/images/placeholder.png" />
+                          <img v-else src="/images/placeholder.png" />
                         </q-avatar>
                       </q-item-section>
                       <q-item-section class="q-mt-sm">

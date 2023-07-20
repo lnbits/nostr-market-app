@@ -1,7 +1,7 @@
 <template>
   <q-card class="card--product">
     <q-img
-      :src="(product.images && product.images.length > 0 && product.images[0]) ? product.images[0] : '/nostrmarket/static/images/placeholder.png'"
+      :src="(product.images && product.images.length > 0 && product.images[0]) ? product.images[0] : '/images/placeholder.png'"
       alt="Product Image" loading="lazy" spinner-color="white" fit="contain" height="300px"></q-img>
 
     <q-card-section class="q-pb-xs q-pt-md">
