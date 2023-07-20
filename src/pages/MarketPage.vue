@@ -222,15 +222,16 @@
 
   <!-- INVOICE DIALOG -->
   <q-dialog v-model="qrCodeDialog.show" position="top">
-    <q-card class="q-pa-lg q-pt-xl lnbits__dialog-card">
+    <q-card class="q-pa-md q-pt-xl">
       <div class="text-center q-mb-lg">
         <div v-if="qrCodeDialog.data.message" class="q-my-lg">
           <strong><span v-text="qrCodeDialog.data.message"></span> </strong>
         </div>
         <a v-else :href="'lightning:' + qrCodeDialog.data?.payment_request">
-          <q-responsive v-if="qrCodeDialog.data.payment_request" :ratio="1" class="q-mx-xl">
-            <qrcode :value="qrCodeDialog.data.payment_request" :options="{ width: 340 }" class="rounded-borders"></qrcode>
-          </q-responsive>
+          <div v-if="qrCodeDialog.data.payment_request" :ratio="1">
+            <vue-qrcode :value="qrCodeDialog.data.payment_request" :options="{ width: 340 }"
+              class="rounded-borders"></vue-qrcode>
+          </div>
           <div v-else>
             <q-spinner color="primary" size="2.55em"></q-spinner>
           </div>
@@ -254,6 +255,8 @@ console.log('### $q', $q)
 
 <script>
 import { defineComponent } from 'vue'
+import VueQrcode from '@chenfengyuan/vue-qrcode';
+
 import MarketConfig from 'components/MarketConfig.vue'
 import UserConfig from 'components/UserConfig.vue'
 import UserChat from 'components/UserChat.vue'
