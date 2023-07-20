@@ -121,16 +121,79 @@
       </div>
       <div class="col-lg-2 col-md-1 col-sm-0 auto-width"></div>
     </div>
-    <!-- <MarketConfig :merchants="merchants" :relays="relays" :config-ui="configUi" :read-notes="readNotes">
-    </MarketConfig> -->
-    <MarketConfig v-if="activePage === 'market-config'" :merchants="merchants" @add-merchant="addMerchant"
-      @remove-merchant="removeMerchant" :relays="relays" :read-notes="readNotes" @add-relay="addRelay"
-      @remove-relay="removeRelay" :config-ui="config?.opts" @ui-config-update="updateUiConfig"
-      @publish-naddr="publishNaddr" @clear-all-data="clearAllData" @note-read="markNoteAsRead"></MarketConfig>
+    <div class="row q-mb-md">
+      <div class="col-lg-2 col-md-1 col-sm-0"></div>
+      <div class="col-lg-8 col-md-10 col-sm-12 auto-width">
+        <q-separator class="q-mt-sm q-mb-md"></q-separator>
 
-    <!-- <UserConfig v-else-if="activePage === 'user-config'" :account="account" @logout="logout" @copy-text="copyText">
-    </UserConfig>
-  -->
+        <market-config v-if="activePage === 'market-config'" :merchants="merchants" @add-merchant="addMerchant"
+          @remove-merchant="removeMerchant" :relays="relays" :read-notes="readNotes" @add-relay="addRelay"
+          @remove-relay="removeRelay" :config-ui="config?.opts" @ui-config-update="updateUiConfig"
+          @publish-naddr="publishNaddr" @clear-all-data="clearAllData" @note-read="markNoteAsRead"></market-config>
+
+        <user-config v-else-if="activePage === 'user-config'" :account="account" @logout="logout"
+          @copy-text="copyText"></user-config>
+
+        <user-chat v-else-if="activePage === 'user-chat'"></user-chat>
+
+        <shopping-cart-list v-else-if="activePage === 'shopping-cart-list'" :carts="shoppingCarts"
+          @add-to-cart="addProductToCart" @remove-from-cart="removeProductFromCart" @remove-cart="removeCart"
+          @checkout-cart="checkoutStallCart"></shopping-cart-list>
+
+        <shopping-cart-checkout v-else-if="activePage === 'shopping-cart-checkout'" :cart="checkoutCart"
+          :stall="checkoutStall" :customer-pubkey="account?.pubkey" @login-required="openAccountDialog"
+          @place-order="placeOrder" @change-page="navigateTo"></shopping-cart-checkout>
+
+        <customer-orders v-else-if="activePage === 'customer-orders'" :orders="orders" :products="products"
+          :stalls="stalls" :merchants="merchants" @show-invoice="showInvoiceQr"></customer-orders>
+
+        <customer-stall v-else-if="activePage === 'customer-stall'" :stall="stalls.find(stall => stall.id == activeStall)"
+          :products="filterProducts" :product-detail="activeProduct" @change-page="navigateTo"
+          @add-to-cart="addProductToCart"></customer-stall>
+
+        <div v-else-if="!merchants?.length">
+          <q-list class="q-mt-md" bordered>
+            <q-item>
+              <q-item-section avatar>
+                <q-avatar>
+                  <q-icon color="primary" name="info" size="xl" />
+                </q-avatar>
+
+              </q-item-section>
+
+              <q-item-section class="q-mt-sm q-ml-lg">
+                <q-item-label><strong>Note</strong></q-item-label>
+
+                <q-item-label>
+                  <div class="text-caption">
+                    <span class="text-subtitle1"> You can start by adding a merchant public key </span>
+                    <q-btn @click="setActivePage('market-config')" flat color="secondary" class="q-mb-xs">Here</q-btn>
+                    <br>
+                    <span class="text-subtitle1 q-pt-md">Or enter a nostr market profile ( <code>naddr</code>) in the
+                      filter input.
+                    </span>
+                  </div>
+                </q-item-label>
+              </q-item-section>
+              <q-item-section side>
+
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </div>
+
+        <div v-else>
+          <customer-stall-list v-if="groupByStall" :stalls="filterStalls" @change-page="navigateTo"></customer-stall-list>
+
+          <customer-market v-else :filtered-products="filterProducts" :search-text="searchText"
+            :filter-categories="filterCategories" @change-page="navigateTo" @update-data="updateData"
+            @add-to-cart="addProductToCart"></customer-market>
+        </div>
+
+      </div>
+      <div class="col-lg-2 col-md-1 col-sm-0 auto-width"></div>
+    </div>
+
   </q-page>
 </template>
 
@@ -144,6 +207,9 @@ console.log('### $q', $q)
 import { defineComponent } from 'vue'
 import MarketConfig from 'components/MarketConfig.vue'
 import UserConfig from 'components/UserConfig.vue'
+import UserChat from 'components/UserChat.vue'
+import ShoppingCartList from 'components/ShoppingCartList.vue'
+
 
 export default defineComponent({
   name: 'MarketPage',
