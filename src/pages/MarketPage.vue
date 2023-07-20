@@ -211,14 +211,12 @@ import UserChat from 'components/UserChat.vue'
 import ShoppingCartList from 'components/ShoppingCartList.vue'
 import ShoppingCartCheckout from 'components/ShoppingCartCheckout.vue'
 import CustomerMarket from 'components/CustomerMarket.vue'
+import CustomerOrders from 'components/CustomerOrders.vue'
 
 
 export default defineComponent({
   name: 'MarketPage',
-  components: {
-    MarketConfig,
-    // UserConfig
-  },
+  components: { MarketConfig },
   data: function () {
     return {
       account: null,
