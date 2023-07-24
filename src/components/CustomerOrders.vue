@@ -54,9 +54,9 @@
                   <q-item-section side>
                     <q-item-label>
 
-                      <q-badge :color="order.paid ? 'green' : 'gray'"><span
+                      <q-badge :color="order.paid ? 'green' : 'grey'"><span
                           v-text="order.paid ? 'Paid' : 'Not Paid'"></span></q-badge>
-                      <q-badge :color="order.shipped ? 'green' : 'gray'"><span
+                      <q-badge :color="order.shipped ? 'green' : 'grey'" class="q-ml-md"><span
                           v-text="order.shipped ? 'Shipped' : 'Not Shipped'"></span></q-badge>
                     </q-item-label>
                     <q-item-label>
