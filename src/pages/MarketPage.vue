@@ -249,8 +249,6 @@
 
 <script setup>
 import { useQuasar } from 'quasar'
-window.$q = useQuasar()
-console.log('### $q', $q)
 </script>
 
 <script>
@@ -518,6 +516,7 @@ export default defineComponent({
       this.readNotes = { ...this.readNotes, ...readNotes }
     },
     applyUiConfigs(config = {}) {
+      console.log('### applyUiConfigs', config)
       const { name, about, ui } = config?.opts || {}
       this.$q.localStorage.set('nostrmarket.marketplaceConfig', { name, about, ui })
       if (config.opts?.ui?.theme) {
@@ -525,14 +524,7 @@ export default defineComponent({
         this.$q.localStorage.set('lnbits.theme', this.config.opts.ui.theme)
       }
       const newDarkMode = config.opts?.ui?.darkMode
-      if (newDarkMode !== undefined) {
-        const oldDarkMode = this.$q.localStorage.getItem('lnbits.darkMode')
-        if (newDarkMode !== oldDarkMode) {
-          this.$q.dark.toggle()
-          this.$q.localStorage.set('lnbits.darkMode', newDarkMode)
-        }
-
-      }
+      this.$q.dark.set(!!newDarkMode)
     },
 
     async createAccount(useExtension = false) {

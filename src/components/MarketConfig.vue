@@ -170,8 +170,8 @@
                 hint="The colors of the market will vary based on the theme. It applies to all components (buttons, labels, inputs, etc)"
                 :options="themeOptions" label="Marketplace Theme"></q-select>
 
-              <q-checkbox @input="updateUiConfig" v-model="configData.ui.darkMode" label="Dark Mode"
-                size="sm"></q-checkbox>
+              <q-checkbox @input="updateUiConfig" @click="updateUiConfig" v-model="configData.ui.darkMode"
+                label="Dark Mode" size="sm"></q-checkbox>
 
             </q-tab-panel>
 
