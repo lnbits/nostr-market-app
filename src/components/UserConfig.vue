@@ -62,10 +62,7 @@ export default defineComponent({
   },
   methods: {
     logout: async function () {
-      LNbits.utils
-        .confirmDialog(
-          'Please make sure you save your private key! You will not be able to recover it later!'
-        )
+      this.$q.dialog(confirm('Please make sure you save your private key! You will not be able to recover it later!'))
         .onOk(async () => {
           this.$emit('logout')
         })

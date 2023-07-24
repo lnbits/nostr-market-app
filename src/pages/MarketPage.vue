@@ -362,9 +362,7 @@ export default defineComponent({
         try {
           const { type, data } = NostrTools.nip19.decode(n)
           if (type !== 'naddr' || data.kind !== 30019) return
-          this.$q
-          LNbits.utils
-            .confirmDialog('Do you want to import this market profile?')
+          this.$q.dialog(confirm('Do you want to import this market profile?'))
             .onOk(async () => {
               await this.checkMarketNaddr(n)
               this.searchText = ''
@@ -486,12 +484,9 @@ export default defineComponent({
         this.activeStall = stallId
       }
       if (merchantPubkey && !(this.merchants.find(m => m.publicKey === merchantPubkey))) {
-        await LNbits.utils
-          .confirmDialog(
-            `We found a merchant pubkey in your request. Do you want to add it to the merchants list?`
-          )
+        this.$q.dialog(confirm('We found a merchant pubkey in your request. Do you want to add it to the merchants list?'))
           .onOk(async () => {
-            await this.merchants.push({ publicKey: merchantPubkey, profile: null })
+            this.merchants.push({ publicKey: merchantPubkey, profile: null })
           })
       }
 
@@ -1166,11 +1161,10 @@ export default defineComponent({
     },
 
     clearAllData() {
-      LNbits.utils
-        .confirmDialog(
-          'This will remove all information about merchants, products, relays and others. ' +
-          'You will NOT be logged out. Do you want to proceed?'
-        )
+      this.$q.dialog(confirm(
+        'This will remove all information about merchants, products, relays and others. ' +
+        'You will NOT be logged out. Do you want to proceed?'
+      ))
         .onOk(async () => {
           this.$q.localStorage.getAllKeys()
             .filter(key => key !== 'nostrmarket.account')

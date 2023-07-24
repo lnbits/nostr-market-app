@@ -28,6 +28,19 @@ var eventToObj = event => {
     }
 }
 
+function confirm(message) {
+    return {
+        message,
+        ok: {
+            flat: true,
+            color: 'primary'
+        },
+        cancel: {
+            flat: true,
+            color: 'grey'
+        }
+    }
+}
 
 
 async function hash(string) {
