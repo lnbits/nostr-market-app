@@ -510,8 +510,8 @@ export default defineComponent({
         opts: null,
       },
 
-      defaultBanner: "/images/nostr-cover.png",
-      defaultLogo: "/images/nostr-avatar.png",
+      defaultBanner: "images/nostr-cover.png",
+      defaultLogo: "images/nostr-avatar.png",
       defaultMarketNaddr:
         "naddr1qqjrqd3jv9skvwfc956rserz956xyeps94snwd3h95cn2ctr8ymrqdpe89jxzqg5waehxw309aex2mrp0yhxgctdw4eju6t0qyv8wumn8ghj7un9d3shjtnndehhyapwwdhkx6tpdsq36amnwvaz7tmwdaehgu3dwp6kytnhv4kxcmmjv3jhytnwv46qzxthwden5te0dehhxarj9eax2cn9v3jk2tnrd3hh2eqpramhxue69uhkummnw3ezuampd3kx2ar0veekzar0wd5xjtnrdaksyg96ypff6u56q9tk99qnp2kghg5ynuse3v7wdu0xxkurdlggj82gmspsgqqqw4psj5pe0p",
       readNotes: {
