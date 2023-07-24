@@ -166,7 +166,7 @@
               <q-input @change="updateUiConfig" outlined v-model="configData.ui.banner" type="text" label="Banner"
                 hint="It represents the visual identity of the market. Can be png, jpg, ico, gif, svg." class="q-mb-md">
               </q-input>
-              <q-select @input="updateUiConfig" filled v-model="configData.ui.theme"
+              <q-select @input="updateUiConfig" @update:model-value="updateUiConfig" filled v-model="configData.ui.theme"
                 hint="The colors of the market will vary based on the theme. It applies to all components (buttons, labels, inputs, etc)"
                 :options="themeOptions" label="Marketplace Theme"></q-select>
 
@@ -279,9 +279,10 @@ export default defineComponent({
       this.$emit('remove-relay', relay)
     },
     updateUiConfig: function () {
-      const { name, about, ui } = this.configData
-      console.log('### this.info', { name, about, ui })
-      this.$emit('ui-config-update', { name, about, ui })
+      setTimeout(() => {
+        const { name, about, ui } = this.configData
+        this.$emit('ui-config-update', { name, about, ui })
+      }, 100)
     },
     publishNaddr() {
       this.$emit('publish-naddr')

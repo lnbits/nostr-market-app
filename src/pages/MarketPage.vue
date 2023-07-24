@@ -522,7 +522,6 @@ export default defineComponent({
       this.$q.localStorage.set('nostrmarket.marketplaceConfig', { name, about, ui })
       if (config.opts?.ui?.theme) {
         document.body.setAttribute('data-theme', this.config.opts.ui.theme)
-        this.$q.localStorage.set('lnbits.theme', this.config.opts.ui.theme)
       }
       const newDarkMode = config.opts?.ui?.darkMode
       this.$q.dark.set(!!newDarkMode)
