@@ -249,6 +249,7 @@
 
 <script setup>
 import { useQuasar } from 'quasar'
+window.$q = useQuasar()
 </script>
 
 <script>
