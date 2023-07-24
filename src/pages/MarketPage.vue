@@ -1,96 +1,82 @@
 <template>
   <q-page>
-    <div class="row q-mb-sm q-mt-md">
-      <div class="col-lg-2 col-md-1 col-sm-0"></div>
-      <div class="col-lg-8 col-md-10 col-sm-12 auto-width">
-        <div class="row q-mb-md q-pa-none">
-          <q-toolbar class="col-lg-1 col-md-1 col-sm-0 q-pl-none">
-            <q-avatar rounded size="64px" class="q-ma-none q-pa-none gt-sm">
-              <img v-if="logoImage" :src="logoImage">
-            </q-avatar>
-          </q-toolbar>
-          <q-toolbar class="col-lg-6 col-md-5 col-sm-12 auto-width">
-            <q-input class="rounded-pill" style="width:100%;" rounded outlined clearable v-model.trim="searchText"
-              label="Filter products, load market profile...">
-              <template v-slot:append>
-                <q-icon v-if="!searchText" name="search" />
-              </template>
-            </q-input>
-          </q-toolbar>
-          <q-toolbar class="col-lg-5 col-md-6 col-sm-12 q-ma-none">
-            <div class="float-right">
-              <q-btn color="gray" icon="travel_explore" flat size="lg"
-                @click="setActivePage('search-nostr')"><q-tooltip>Search
-                  for products on Nostr</q-tooltip></q-btn>
-              <q-btn color="gray" icon="settings" flat size="lg" @click="setActivePage('market-config')"><q-tooltip>
-                  Settings</q-tooltip></q-btn>
-              <q-btn v-if="account" @click="setActivePage('user-config')" color="gray" icon="perm_identity" flat
-                size="lg"><q-tooltip>User
-                  User Config</q-tooltip></q-btn>
-              <q-btn v-else @click="accountDialog.show = true" color="gray" icon="person_add" flat
-                size="lg"><q-tooltip>User
-                  Login</q-tooltip></q-btn>
-              <q-btn @click="setActivePage('user-chat')" color="gray" icon="chat" flat
-                size="lg"><q-tooltip>Chat</q-tooltip></q-btn>
-              <q-btn @click="setActivePage('customer-orders')" color="gray" icon="receipt_long" flat
-                size="lg"><q-tooltip>Orders</q-tooltip></q-btn>
-              <q-btn color="gray" icon="shopping_cart" dense round flat size="lg"
-                @click="setActivePage('shopping-cart-list')">
-                <q-tooltip>Shopping Cart</q-tooltip>
 
-                <q-badge v-if="allCartsItemCount" color="secondary" floating>
-                  <span v-text="allCartsItemCount"></span>
-                </q-badge>
-              </q-btn>
-            </div>
+    <div class="row q-mb-md q-pa-none">
+      <q-toolbar class="col-lg-1 col-md-1 col-sm-0 q-pl-none">
+        <q-avatar rounded size="64px" class="q-ma-none q-pa-none gt-sm">
+          <img v-if="logoImage" :src="logoImage">
+        </q-avatar>
+      </q-toolbar>
+      <q-toolbar class="col-lg-6 col-md-5 col-sm-12 auto-width">
+        <q-input class="rounded-pill" style="width:100%;" rounded outlined clearable v-model.trim="searchText"
+          label="Filter products, load market profile...">
+          <template v-slot:append>
+            <q-icon v-if="!searchText" name="search" />
+          </template>
+        </q-input>
+      </q-toolbar>
+      <q-toolbar class="col-lg-5 col-md-6 col-sm-12 q-ma-none">
+        <div class="float-right">
+          <q-btn color="gray" icon="travel_explore" flat size="lg"
+            @click="setActivePage('search-nostr')"><q-tooltip>Search
+              for products on Nostr</q-tooltip></q-btn>
+          <q-btn color="gray" icon="settings" flat size="lg" @click="setActivePage('market-config')"><q-tooltip>
+              Settings</q-tooltip></q-btn>
+          <q-btn v-if="account" @click="setActivePage('user-config')" color="gray" icon="perm_identity" flat
+            size="lg"><q-tooltip>User
+              User Config</q-tooltip></q-btn>
+          <q-btn v-else @click="accountDialog.show = true" color="gray" icon="person_add" flat size="lg"><q-tooltip>User
+              Login</q-tooltip></q-btn>
+          <q-btn @click="setActivePage('user-chat')" color="gray" icon="chat" flat
+            size="lg"><q-tooltip>Chat</q-tooltip></q-btn>
+          <q-btn @click="setActivePage('customer-orders')" color="gray" icon="receipt_long" flat
+            size="lg"><q-tooltip>Orders</q-tooltip></q-btn>
+          <q-btn color="gray" icon="shopping_cart" dense round flat size="lg"
+            @click="setActivePage('shopping-cart-list')">
+            <q-tooltip>Shopping Cart</q-tooltip>
 
-          </q-toolbar>
+            <q-badge v-if="allCartsItemCount" color="secondary" floating>
+              <span v-text="allCartsItemCount"></span>
+            </q-badge>
+          </q-btn>
         </div>
-      </div>
-      <div class="col-lg-2 col-md-1 col-sm-0"></div>
+
+      </q-toolbar>
     </div>
 
-    <div class="row q-mb-sm">
-      <div class="col-lg-2 col-md-1 col-sm-0"></div>
-      <div class="col-lg-8 col-md-10 col-sm-12">
 
-        <div v-if="products?.length" class="gt-sm">
-          <q-virtual-scroll :items="allCategories" virtual-scroll-horizontal>
-            <template v-slot="{ item, index }">
-              <q-chip :key="index" :color="item.selected ? 'grey' : ''" class="cursor-pointer q-mb-md">
-                <span v-text="item.category" @click="toggleCategoryFilter(item.category)"></span>
-                <q-badge @click="toggleCategoryFilter(item.category)" rounded class="q-ml-sm" color="secondary"> <span
-                    v-text="item.count"></span></q-badge>
-              </q-chip>
-            </template>
-          </q-virtual-scroll>
-        </div>
-      </div>
-      <div class="col-lg-2 col-md-1 col-sm-0"></div>
+
+
+    <div v-if="products?.length" class="gt-sm">
+      <q-virtual-scroll :items="allCategories" virtual-scroll-horizontal>
+        <template v-slot="{ item, index }">
+          <q-chip :key="index" :color="item.selected ? 'grey' : ''" class="cursor-pointer q-mb-md">
+            <span v-text="item.category" @click="toggleCategoryFilter(item.category)"></span>
+            <q-badge @click="toggleCategoryFilter(item.category)" rounded class="q-ml-sm" color="secondary"> <span
+                v-text="item.count"></span></q-badge>
+          </q-chip>
+        </template>
+      </q-virtual-scroll>
     </div>
+
 
     <div v-if="isLoading" class="row q-mb-sm">
       <div class="col-12 text-center"> <q-spinner-dots color="primary" size="xl" /></div>
     </div>
 
-    <div class="row q-mb-sm">
-      <div class="col-lg-2 col-md-1 col-sm-0"></div>
-      <div class="col-lg-8 col-md-10 col-sm-12 auto-width">
-        <q-banner class="row q-pa-none q-mb-lg gt-sm shadow-2">
-          <q-img v-if="bannerImage" :src="bannerImage" class="rounded-borders" style="width: 100%; height: 250px" cover>
-            <div v-if="config?.opts?.about" class="absolute-bottom text-subtitle1 text-center">
-              <span v-text="config.opts.about"></span>
-            </div>
-          </q-img>
-        </q-banner>
 
-      </div>
-      <div class="col-lg-2 col-md-1 col-sm-0 auto-width"></div>
-    </div>
+    <q-banner class="row q-pa-none q-mb-lg gt-sm shadow-2">
+      <q-img v-if="bannerImage" :src="bannerImage" class="rounded-borders" style="width: 100%; height: 250px" cover>
+        <div v-if="config?.opts?.about" class="absolute-bottom text-subtitle1 text-center">
+          <span v-text="config.opts.about"></span>
+        </div>
+      </q-img>
+    </q-banner>
+
+
 
     <div class="row q-mb-sm">
-      <div class="col-lg-2 col-md-1 col-sm-0"></div>
-      <div class="col-lg-7 col-md-9 col-sm-12 auto-width">
+      <div class="col-md-10 col-sm-1 auto-width">
 
         <q-breadcrumbs class="cursor q-mt-sm q-mr-sm">
           <q-breadcrumbs-el :label="config?.opts?.name || 'Market'" icon="home" @click="navigateTo('market')"
@@ -113,85 +99,77 @@
           <q-breadcrumbs-el v-if="activePage === 'user-chat'" label="User Chat" icon="chat"></q-breadcrumbs-el>
         </q-breadcrumbs>
 
-
       </div>
-      <div class="col-lg-1 col-md-1 col-sm-0 auto-width">
+      <div class="col-md-2 col-sm-1">
         <q-btn v-if="activePage === 'customer-stall'" flat color="grey" icon="content_copy" @click="copyUrl()"
           class="float-right"></q-btn>
       </div>
-      <div class="col-lg-2 col-md-1 col-sm-0 auto-width"></div>
     </div>
-    <div class="row q-mb-md">
-      <div class="col-lg-2 col-md-1 col-sm-0"></div>
-      <div class="col-lg-8 col-md-10 col-sm-12 auto-width">
-        <q-separator class="q-mt-sm q-mb-md"></q-separator>
 
-        <market-config v-if="activePage === 'market-config'" :merchants="merchants" @add-merchant="addMerchant"
-          @remove-merchant="removeMerchant" :relays="relays" :read-notes="readNotes" @add-relay="addRelay"
-          @remove-relay="removeRelay" :config-ui="config?.opts" @ui-config-update="updateUiConfig"
-          @publish-naddr="publishNaddr" @clear-all-data="clearAllData" @note-read="markNoteAsRead"></market-config>
+    <q-separator class="q-mt-sm q-mb-md"></q-separator>
 
-        <user-config v-else-if="activePage === 'user-config'" :account="account" @logout="logout"
-          @copy-text="copyText"></user-config>
+    <market-config v-if="activePage === 'market-config'" :merchants="merchants" @add-merchant="addMerchant"
+      @remove-merchant="removeMerchant" :relays="relays" :read-notes="readNotes" @add-relay="addRelay"
+      @remove-relay="removeRelay" :config-ui="config?.opts" @ui-config-update="updateUiConfig"
+      @publish-naddr="publishNaddr" @clear-all-data="clearAllData" @note-read="markNoteAsRead"></market-config>
 
-        <user-chat v-else-if="activePage === 'user-chat'"></user-chat>
+    <user-config v-else-if="activePage === 'user-config'" :account="account" @logout="logout"
+      @copy-text="copyText"></user-config>
 
-        <shopping-cart-list v-else-if="activePage === 'shopping-cart-list'" :carts="shoppingCarts"
-          @add-to-cart="addProductToCart" @remove-from-cart="removeProductFromCart" @remove-cart="removeCart"
-          @checkout-cart="checkoutStallCart"></shopping-cart-list>
+    <user-chat v-else-if="activePage === 'user-chat'"></user-chat>
 
-        <shopping-cart-checkout v-else-if="activePage === 'shopping-cart-checkout'" :cart="checkoutCart"
-          :stall="checkoutStall" :customer-pubkey="account?.pubkey" @login-required="openAccountDialog"
-          @place-order="placeOrder" @change-page="navigateTo"></shopping-cart-checkout>
+    <shopping-cart-list v-else-if="activePage === 'shopping-cart-list'" :carts="shoppingCarts"
+      @add-to-cart="addProductToCart" @remove-from-cart="removeProductFromCart" @remove-cart="removeCart"
+      @checkout-cart="checkoutStallCart"></shopping-cart-list>
 
-        <customer-orders v-else-if="activePage === 'customer-orders'" :orders="orders" :products="products"
-          :stalls="stalls" :merchants="merchants" @show-invoice="showInvoiceQr"></customer-orders>
+    <shopping-cart-checkout v-else-if="activePage === 'shopping-cart-checkout'" :cart="checkoutCart"
+      :stall="checkoutStall" :customer-pubkey="account?.pubkey" @login-required="openAccountDialog"
+      @place-order="placeOrder" @change-page="navigateTo"></shopping-cart-checkout>
 
-        <customer-stall v-else-if="activePage === 'customer-stall'" :stall="stalls.find(stall => stall.id == activeStall)"
-          :products="filterProducts" :product-detail="activeProduct" @change-page="navigateTo"
-          @add-to-cart="addProductToCart"></customer-stall>
+    <customer-orders v-else-if="activePage === 'customer-orders'" :orders="orders" :products="products" :stalls="stalls"
+      :merchants="merchants" @show-invoice="showInvoiceQr"></customer-orders>
 
-        <div v-else-if="!merchants?.length">
-          <q-list class="q-mt-md" bordered>
-            <q-item>
-              <q-item-section avatar>
-                <q-avatar>
-                  <q-icon color="primary" name="info" size="xl" />
-                </q-avatar>
+    <customer-stall v-else-if="activePage === 'customer-stall'" :stall="stalls.find(stall => stall.id == activeStall)"
+      :products="filterProducts" :product-detail="activeProduct" @change-page="navigateTo"
+      @add-to-cart="addProductToCart"></customer-stall>
 
-              </q-item-section>
+    <div v-else-if="!merchants?.length">
+      <q-list class="q-mt-md" bordered>
+        <q-item>
+          <q-item-section avatar>
+            <q-avatar>
+              <q-icon color="primary" name="info" size="xl" />
+            </q-avatar>
 
-              <q-item-section class="q-mt-sm q-ml-lg">
-                <q-item-label><strong>Note</strong></q-item-label>
+          </q-item-section>
 
-                <q-item-label>
-                  <div class="text-caption">
-                    <span class="text-subtitle1"> You can start by adding a merchant public key </span>
-                    <q-btn @click="setActivePage('market-config')" flat color="secondary" class="q-mb-xs">Here</q-btn>
-                    <br>
-                    <span class="text-subtitle1 q-pt-md">Or enter a nostr market profile ( <code>naddr</code>) in the
-                      filter input.
-                    </span>
-                  </div>
-                </q-item-label>
-              </q-item-section>
-              <q-item-section side>
+          <q-item-section class="q-mt-sm q-ml-lg">
+            <q-item-label><strong>Note</strong></q-item-label>
 
-              </q-item-section>
-            </q-item>
-          </q-list>
-        </div>
+            <q-item-label>
+              <div class="text-caption">
+                <span class="text-subtitle1"> You can start by adding a merchant public key </span>
+                <q-btn @click="setActivePage('market-config')" flat color="secondary" class="q-mb-xs">Here</q-btn>
+                <br>
+                <span class="text-subtitle1 q-pt-md">Or enter a nostr market profile ( <code>naddr</code>) in the
+                  filter input.
+                </span>
+              </div>
+            </q-item-label>
+          </q-item-section>
+          <q-item-section side>
 
-        <div v-else>
-          <customer-stall-list v-if="groupByStall" :stalls="filterStalls" @change-page="navigateTo"></customer-stall-list>
+          </q-item-section>
+        </q-item>
+      </q-list>
+    </div>
 
-          <customer-market v-else :filtered-products="filterProducts" :search-text="searchText"
-            :filter-categories="filterCategories" @change-page="navigateTo" @update-data="updateData"
-            @add-to-cart="addProductToCart"></customer-market>
-        </div>
+    <div v-else>
+      <customer-stall-list v-if="groupByStall" :stalls="filterStalls" @change-page="navigateTo"></customer-stall-list>
 
-      </div>
-      <div class="col-lg-2 col-md-1 col-sm-0 auto-width"></div>
+      <customer-market v-else :filtered-products="filterProducts" :search-text="searchText"
+        :filter-categories="filterCategories" @change-page="navigateTo" @update-data="updateData"
+        @add-to-cart="addProductToCart"></customer-market>
     </div>
 
   </q-page>

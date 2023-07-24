@@ -16,7 +16,8 @@
             </strong>
           </q-item-label>
           <q-item-label caption>
-            By <span v-text="cart.merchant?.profile?.name || cart.merchant?.publicKey"></span>
+            By <span class="ellipsis-2-lines text-wrap"
+              v-text="cart.merchant?.profile?.name || cart.merchant?.publicKey"></span>
           </q-item-label>
         </q-item-section>
         <q-item-section side>

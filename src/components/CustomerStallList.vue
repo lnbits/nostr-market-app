@@ -27,8 +27,8 @@
           </div>
         </q-card-section>
 
-        <q-card-section class="q-pl-sm">
-          <div v-if="stall.categories" class="text-subtitle1">
+        <q-card-section class="q-pl-sm gt-sm">
+          <div v-if="stall.categories" class="text-subtitle1" >
             <q-virtual-scroll :items="stall.categories || []" virtual-scroll-horizontal>
               <template v-slot="{ item, index }">
                 <q-chip :key="index" dense><span v-text="item"></span></q-chip>

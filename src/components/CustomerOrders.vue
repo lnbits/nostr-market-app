@@ -22,7 +22,7 @@
               </strong>
             </q-item-label>
             <q-item-label caption>
-              <span v-text="merchant.pubkey"></span>
+              <span class="ellipsis-2-lines text-wrap" v-text="merchant.pubkey"></span>
             </q-item-label>
           </q-item-section>
 
@@ -40,7 +40,7 @@
                   <q-item-section class="q-mt-sm">
                     <q-item-label><strong> <span v-text="order.stallName"></span> </strong>
                       <q-badge @click="showInvoice(order)" v-if="order.invoice?.human_readable_part?.amount"
-                        color="orange" class="q-ml-lg">
+                        color="orange" class="q-ml-lg gt-sm">
                         <span v-text="formatCurrency(order.invoice?.human_readable_part?.amount / 1000, 'sat')"></span>
                       </q-badge></q-item-label>
 
@@ -72,7 +72,7 @@
                 <q-separator></q-separator>
                 <q-card-section class="col-12">
                   <q-item-section>
-                    <q-item-label> <strong>Order ID: </strong> <span v-text="order.id"></span>
+                    <q-item-label> <strong>Order ID: </strong> <span class="ellipsis-2-lines text-wrap" v-text="order.id"></span>
                     </q-item-label>
                   </q-item-section>
 

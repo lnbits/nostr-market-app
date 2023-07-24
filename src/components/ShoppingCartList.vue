@@ -23,7 +23,7 @@
               </strong>
             </q-item-label>
             <q-item-label caption>
-              By <span v-text="cart.merchant?.profile?.name || cart.merchant?.publicKey"></span>
+              By <span class="ellipsis-2-lines text-wrap" v-text="cart.merchant?.profile?.name || cart.merchant?.publicKey"></span>
             </q-item-label>
           </q-item-section>
           <q-item-section side>
@@ -51,13 +51,13 @@
                 </q-item-section>
                 <q-item-section class="q-mt-sm">
                   <q-item-label>{{ product.name }}</q-item-label>
-                  <q-item-label>
+                  <q-item-label class="gt-sm">
                     <div class="text-caption text-grey ellipsis-2-lines">
                       <p>{{ product.description }}</p>
                     </div>
                   </q-item-label>
                 </q-item-section>
-                <q-item-section class="q-mt-sm">
+                <q-item-section class="q-mt-sm gt-sm">
                   <q-item-label><strong>{{ formatCurrency(product.price, product.currency) }}</strong></q-item-label>
                   <q-item-label></q-item-label>
                 </q-item-section>
