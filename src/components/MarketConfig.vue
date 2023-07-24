@@ -115,7 +115,7 @@
               </div>
             </q-tab-panel>
             <q-tab-panel name="marketplace">
-              <q-list v-if="!readNotes?.marketUi" class="q-mb-lg" bordered>
+              <q-list v-if="!readNotes?.marketUi" class="q-mb-lg gt-sm" bordered>
                 <q-item>
                   <q-item-section avatar>
                     <q-avatar>
@@ -170,8 +170,9 @@
                 hint="The colors of the market will vary based on the theme. It applies to all components (buttons, labels, inputs, etc)"
                 :options="themeOptions" label="Marketplace Theme"></q-select>
 
+              <div class="lt-md q-mt-lg"></div>
               <q-checkbox @input="updateUiConfig" @click="updateUiConfig" v-model="configData.ui.darkMode"
-                label="Dark Mode" size="sm"></q-checkbox>
+                label="Dark Mode" size="sm" class="q-mt-sm"></q-checkbox>
 
             </q-tab-panel>
 
@@ -188,6 +189,7 @@
           color="primary"></q-btn>
       </div>
     </q-card-section>
+    <q-card-section class="lt-md"></q-card-section>
     <q-card-section></q-card-section>
   </q-card>
 </template>
