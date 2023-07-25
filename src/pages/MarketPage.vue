@@ -140,7 +140,7 @@
               <ul>
                 <li>
                   <span class="text-h6">
-                    <q-btn @click="checkMarketNaddr(defaultMarketNaddr)" size="xl" flat color="secondary"
+                    <q-btn @click="addMarket(defaultMarketNaddr)" size="xl" flat color="secondary"
                       class="q-mb-xs">Import</q-btn>
                     a list of popular merchants, or
                   </span>
@@ -260,6 +260,7 @@ export default defineComponent({
         },
       },
 
+      markets: [],
       merchants: [],
       shoppingCarts: [],
       checkoutCart: null,
@@ -347,7 +348,7 @@ export default defineComponent({
           this.$q
             .dialog(confirm("Do you want to import this market profile?"))
             .onOk(async () => {
-              await this.checkMarketNaddr(n);
+              await this.addMarket(n);
               this.searchText = "";
             });
         } catch { }
@@ -433,7 +434,7 @@ export default defineComponent({
 
     const params = new URLSearchParams(window.location.search);
 
-    await this.checkMarketNaddr(params.get("naddr"));
+    await this.addMarket(params.get("naddr"));
     await this.handleQueryParams(params);
 
     // Get notes from Nostr
@@ -474,6 +475,7 @@ export default defineComponent({
       }
     },
     restoreFromStorage() {
+      this.markets = this.$q.localStorage.getItem("nostrmarket.markets") || [];
       this.merchants = this.$q.localStorage.getItem("nostrmarket.merchants") || [];
       this.shoppingCarts =
         this.$q.localStorage.getItem("nostrmarket.shoppingCarts") || [];
@@ -657,7 +659,7 @@ export default defineComponent({
         );
     },
 
-    async checkMarketNaddr(naddr) {
+    async addMarket(naddr) {
       if (!naddr) return;
 
       try {
