@@ -472,7 +472,7 @@ export default defineComponent({
       checkoutCart: null,
       checkoutStall: null,
 
-      activePage: "",
+      activePage: "market",
       activeOrderId: null,
       dmSubscriptions: {},
 
@@ -627,14 +627,13 @@ export default defineComponent({
         all[c] = (all[c] || 0) + 1;
         return all;
       }, {});
-      const x = Object.keys(countedCategories)
+      return Object.keys(countedCategories)
         .map((category) => ({
           category,
           count: countedCategories[category],
           selected: this.filterCategories.indexOf(category) !== -1,
         }))
         .sort((a, b) => b.count - a.count);
-      return x;
     },
   },
 
