@@ -472,7 +472,7 @@ export default defineComponent({
       checkoutCart: null,
       checkoutStall: null,
 
-      activePage: "",
+      activePage: "market",
       activeOrderId: null,
       dmSubscriptions: {},
 
