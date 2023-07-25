@@ -488,7 +488,7 @@ export default defineComponent({
 
       // trigger the `watch` logic
       this.config = { ...this.config, opts: { ...this.config.opts, ...uiConfig } };
-      this.applyUiConfigs(this.config);
+      this.applyUiConfigs(this.config?.opts);
 
       const prefix = "nostrmarket.orders.";
       const orderKeys = this.$q.localStorage
@@ -505,15 +505,13 @@ export default defineComponent({
       const readNotes = this.$q.localStorage.getItem("nostrmarket.readNotes") || {};
       this.readNotes = { ...this.readNotes, ...readNotes };
     },
-    applyUiConfigs(config = {}) {
-      console.log("### applyUiConfigs", config);
-      const { name, about, ui } = config?.opts || {};
+    applyUiConfigs(opts = {}) {
+      const { name, about, ui } = opts;
       this.$q.localStorage.set("nostrmarket.marketplaceConfig", { name, about, ui });
-      if (config.opts?.ui?.theme) {
-        document.body.setAttribute("data-theme", this.config.opts.ui.theme);
+      if (opts.ui?.theme) {
+        document.body.setAttribute("data-theme", opts.ui.theme);
       }
-      const newDarkMode = config.opts?.ui?.darkMode;
-      this.$q.dark.set(!!newDarkMode);
+      this.$q.dark.set(!!opts.ui?.darkMode);
     },
 
     async createAccount(useExtension = false) {
@@ -563,7 +561,7 @@ export default defineComponent({
     async updateUiConfig(data) {
       const { name, about, ui } = data;
       this.config = { ...this.config, opts: { ...this.config.opts, name, about, ui } };
-      this.applyUiConfigs(this.config);
+      this.applyUiConfigs(this.config?.opts);
     },
 
     async updateData(events) {
@@ -691,7 +689,7 @@ export default defineComponent({
         this.config = { ...this.config, opts: JSON.parse(event.content) };
 
         this.addMerchants(this.config.opts?.merchants);
-        this.applyUiConfigs(this.config);
+        this.applyUiConfigs(this.config?.opts);
       } catch (error) {
         console.warn(error);
       }
