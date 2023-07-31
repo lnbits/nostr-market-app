@@ -67,7 +67,7 @@
                     <q-item-section avatar>
                       <q-avatar>
                         <img v-if="profile?.picture" :src="profile.picture" />
-                        <img v-else src="images/blank-avatar.webp" />
+                        <img v-else :src="$q.config.staticPath + '/images/blank-avatar.webp'" />
                       </q-avatar>
                     </q-item-section>
                     <q-item-section class="q-mt-sm">

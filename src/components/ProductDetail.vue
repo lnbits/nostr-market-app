@@ -10,7 +10,7 @@
 
       </div>
       <div v-else class="q-pr-md">
-        <q-img src="/nostrmarket/static/images/placeholder.png" :ratio="16 / 9"></q-img>
+        <q-img  :src="$q.config.staticPath + '/images/placeholder.png'" :ratio="16 / 9"></q-img>
       </div>
     </div>
     <div class="col-lg-7 col-md-7 col-sm-12 col-xs-12  q-mt-sm">
