@@ -148,7 +148,7 @@ import moment from 'moment'
 export default defineComponent({
   name: 'CustomerOrders',
 
-  props: ['orders', 'products', 'stalls', 'merchants'],
+  props: ['orders', 'products', 'stalls'],
   data: function () {
     return {}
   },
@@ -199,8 +199,9 @@ export default defineComponent({
     },
 
     merchantProfile: function (pubkey) {
-      const merchant = this.merchants.find(m => m.publicKey === pubkey)
-      return merchant?.profile
+      // const merchant = this.merchants.find(m => m.publicKey === pubkey)
+      // return merchant?.profile
+      // todo
     },
 
     getProductsForOrder: function (order) {

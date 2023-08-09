@@ -11,7 +11,7 @@ var eventToObj = event => {
     try {
         event.content = JSON.parse(event.content) || null
     } catch {
-        event.content = null
+
     }
 
 
