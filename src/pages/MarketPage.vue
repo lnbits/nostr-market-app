@@ -42,14 +42,7 @@
               <span v-text="filterCount"></span>
             </q-badge>
           </q-btn>
-          <!-- <q-btn
-            color="gray"
-            icon="settings"
-            flat
-            size="lg"
-            @click="setActivePage('market-config')"
-            ><q-tooltip> Settings</q-tooltip></q-btn
-          > -->
+
           <q-btn
             @click="navigateTo('user-config')"
             color="gray"
@@ -58,15 +51,7 @@
             size="lg"
             ><q-tooltip>User User Config</q-tooltip></q-btn
           >
-          <!-- <q-btn
-            v-else
-            @click="accountDialog.show = true"
-            color="gray"
-            icon="person_add"
-            flat
-            size="lg"
-            ><q-tooltip>User Login</q-tooltip></q-btn
-          > -->
+
           <q-btn
             @click="navigateTo('user-chat')"
             color="gray"
@@ -351,6 +336,7 @@
       :orders="orders"
       :products="products"
       :stalls="stalls"
+      :profiles="profiles"
       @show-invoice="showInvoiceQr"
     ></customer-orders>
     <!-- todo: :merchants="merchants" -->
