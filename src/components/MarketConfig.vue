@@ -222,7 +222,7 @@
                       <q-item-label
                         ><strong>{{
                           merchantProfile(pubkey)?.name ||
-                          merchantProfile(pubkey)?.display_name
+                          merchantProfile(pubkey)?.display_name || pubkeyAlias(pubkey)
                         }}</strong></q-item-label
                       >
                       <q-item-label>
@@ -344,6 +344,12 @@
 
 <script>
 import { defineComponent } from "vue";
+import {
+  uniqueNamesGenerator,
+  adjectives,
+  colors,
+  animals,
+} from "unique-names-generator";
 
 export default defineComponent({
   name: "EssentialLink",
@@ -469,6 +475,15 @@ export default defineComponent({
         }
       );
     },
+    pubkeyAlias(pubkey) {
+      return uniqueNamesGenerator({
+        dictionaries: [adjectives, animals, colors],
+        length: 2,
+        separator: " ",
+        style: "capital",
+        seed: pubkey,
+      });
+    },
   },
   created: async function () {
     this.marketData = {
@@ -478,7 +493,6 @@ export default defineComponent({
     if (!this.readNotes?.merchants) {
       this.tab = "merchants";
     }
-    console.log("### relaysData", this.relaysData);
   },
 });
 </script>
