@@ -18,7 +18,7 @@
     >
     <q-item-label>
       <div class="text-caption text-grey ellipsis-2-lines">
-        <p>{{ pubkey }}</p>
+        <p>{{ description || pubkey }}</p>
       </div>
     </q-item-label>
     <q-tooltip>{{ pubkey }}</q-tooltip>
@@ -38,7 +38,7 @@ import { toSvg } from "jdenticon";
 
 export default defineComponent({
   name: "UserProfile",
-  props: ["pubkey", "profiles", "name"],
+  props: ["pubkey", "profiles", "description"],
 
   data: function () {
     return {};

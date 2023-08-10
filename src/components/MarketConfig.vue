@@ -436,9 +436,7 @@ export default defineComponent({
     cloneMarketData() {
       return JSON.parse(JSON.stringify(this.marketData));
     },
-    merchantProfile(pubkey) {
-      return this.profiles?.find((p) => p.pubkey === pubkey);
-    },
+
     relayData(relayUrl) {
       return (
         (this.relaysData || []).find((r) => r.relayUrl === relayUrl) || {
