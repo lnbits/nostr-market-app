@@ -210,19 +210,17 @@
                           v-if="merchantProfile(pubkey)?.picture"
                           :src="merchantProfile(pubkey).picture"
                         />
-                        <img
-                          v-else
-                          :src="
-                            $q.config.staticPath + '/images/blank-avatar.webp'
-                          "
-                        />
+                        <div v-else :innerHTML="pubkeyAvatar(pubkey)">
+                          <!-- {{ }} -->
+                        </div>
                       </q-avatar>
                     </q-item-section>
                     <q-item-section class="q-mt-sm">
                       <q-item-label
                         ><strong>{{
                           merchantProfile(pubkey)?.name ||
-                          merchantProfile(pubkey)?.display_name || pubkeyAlias(pubkey)
+                          merchantProfile(pubkey)?.display_name ||
+                          pubkeyAlias(pubkey)
                         }}</strong></q-item-label
                       >
                       <q-item-label>
@@ -350,6 +348,8 @@ import {
   colors,
   animals,
 } from "unique-names-generator";
+
+import { toSvg } from "jdenticon";
 
 export default defineComponent({
   name: "EssentialLink",
@@ -483,6 +483,9 @@ export default defineComponent({
         style: "capital",
         seed: pubkey,
       });
+    },
+    pubkeyAvatar(pubkey) {
+      return toSvg(pubkey, 100);
     },
   },
   created: async function () {
