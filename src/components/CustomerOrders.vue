@@ -201,7 +201,6 @@ export default defineComponent({
     merchantOrders: function () {
       return Object.keys(this.orders).map((pubkey) => ({
         pubkey,
-        profile: this.merchantProfile(pubkey),
         orders: this.orders[pubkey].map(this.enrichOrder),
       }));
     },
@@ -242,12 +241,6 @@ export default defineComponent({
       } catch (error) {
         console.warn(error);
       }
-    },
-
-    merchantProfile: function (pubkey) {
-      // const merchant = this.merchants.find(m => m.publicKey === pubkey)
-      // return merchant?.profile
-      // todo
     },
 
     getProductsForOrder: function (order) {
