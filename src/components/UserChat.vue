@@ -16,17 +16,16 @@
 
       <q-separator vertical />
 
-      <q-card-section style="width: 100%;">
-        <div style="width: 100%;" class="q-pa-md row justify-center">
-          <div style="width: 100%;">
+      <q-card-section style="width: 100%">
+        <div style="width: 100%" class="q-pa-md row justify-center">
+          <div style="width: 100%">
             <q-chat-message
               v-for="(dmEvent, index) in dmEvents"
               :key="index"
               :name="dmEvent.sent ? 'me' : selectedProfile?.name || 'merchant'"
-              :text="dmEvent.isJson ? [] : [dmEvent.message]"
               :sent="dmEvent.sent"
+              :avatar="dmEvent.avatar"
               :stamp="dmEvent.dateFrom"
-
             >
               <div v-if="dmEvent.isJson">
                 <div v-if="dmEvent.message.type === 0">
@@ -90,10 +89,15 @@ export default defineComponent({
       console.log("### watch n", n);
 
       this.dmEvents = (n?.events || []).map((e) => {
+        const sent = this.accountPubkey === e.pubkey;
         const dm = {
           isJson: false,
           message: e.content,
-          sent: this.accountPubkey === e.pubkey,
+          sent,
+          avatar: sent
+            ? $q.config.staticPath + "/images/blank-avatar.webp"
+            : this.selectedProfile?.picture ||
+              $q.config.staticPath + "/images/blank-avatar.webp",
           dateFrom: e.created_at + "",
         };
         if (isJson(e.content)) {
