@@ -313,9 +313,10 @@
       :account-pubkey="account?.pubkey"
       :peer-pubkeys="dmPeers"
       :profiles="profiles"
-
+      :events="dmEvents"
+      @chat-selected="handleDmChatSelected"
     ></user-chat>
-    <!-- :events="dmEvents" -->
+
 
     <shopping-cart-list
       v-else-if="activePage === 'shopping-cart-list'"
@@ -598,6 +599,7 @@ export default defineComponent({
       filterData: {
         categories: [],
       },
+      dmEvents: [],
 
       activeMarket: null,
       activeStall: null,
@@ -1611,6 +1613,13 @@ export default defineComponent({
       this.setActivePage("shopping-cart-checkout");
     },
 
+    /////////////////////////////////////////////////////////// DIRRECT MESSAGES ///////////////////////////////////////////////////////////
+
+    handleDmChatSelected(pubkey) {
+      console.log("### handleDmChatSelected", pubkey);
+      this.dmEvents =this.$q.localStorage.getItem(`nostrmarket.dm.${pubkey}`) || [];
+    },
+
     /////////////////////////////////////////////////////////// ORDERS ///////////////////////////////////////////////////////////
 
     async placeOrder({ event, order, cartId }) {
@@ -1804,7 +1813,7 @@ export default defineComponent({
       if (existingEvent) return;
 
       dms.events.push(event);
-      dms.events.sort((a, b) => a - b);
+      dms.events.sort((a, b) => a.created_at - b.created_at);
       dms.lastCreatedAt = dms.events[dms.events.length - 1].created_at;
       this.$q.localStorage.set(`nostrmarket.dm.${peerPubkey}`, dms);
     },
