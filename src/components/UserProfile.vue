@@ -16,7 +16,7 @@
         pubkeyAlias(pubkey)
       }}</strong></q-item-label
     >
-    <q-item-label>
+    <q-item-label class="gt-sm">
       <div class="text-caption text-grey ellipsis-2-lines">
         <p>{{ description || pubkey }}</p>
       </div>

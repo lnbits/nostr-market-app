@@ -308,7 +308,14 @@
       @copy-text="copyText"
     ></user-config>
 
-    <user-chat v-else-if="activePage === 'user-chat'"></user-chat>
+    <user-chat
+      v-else-if="activePage === 'user-chat'"
+      :account-pubkey="account?.pubkey"
+      :peer-pubkeys="dmPeers"
+      :profiles="profiles"
+
+    ></user-chat>
+    <!-- :events="dmEvents" -->
 
     <shopping-cart-list
       v-else-if="activePage === 'shopping-cart-list'"
@@ -715,7 +722,6 @@ export default defineComponent({
       if (this.filterData.merchants) total += this.filterData.merchants.length;
       if (this.filterData.stalls) total += this.filterData.stalls.length;
 
-      console.log("### fiterCount", total);
       return total;
     },
     filterStalls() {
@@ -807,6 +813,15 @@ export default defineComponent({
       return Object.values(this.relaysData).filter(
         (r) => r && this.activeMarket.relays.includes(r.relayUrl)
       );
+    },
+    dmPeers() {
+      // todo: does not refresh
+      const prefix = "nostrmarket.dm.";
+      const dmKeys = this.$q.localStorage
+        .getAllKeys()
+        .filter((k) => k.startsWith(prefix));
+
+      return dmKeys.map((k) => k.substring(prefix.length));
     },
   },
 
@@ -1197,6 +1212,7 @@ export default defineComponent({
     },
 
     async _processDmEvents(e) {
+      if (!this.account?.pubkey) return;
       const receiverPubkey = e.tags.find(
         ([k, v]) => k === "p" && v && v !== ""
       )[1];
@@ -1205,9 +1221,19 @@ export default defineComponent({
         console.warn("Unexpected DM. Dropped!");
         return;
       }
-      this._persistDMEvent(e);
+
       const peerPubkey = isSentByMe ? receiverPubkey : e.pubkey;
-      await this._handleIncommingDm(e, peerPubkey);
+      e.content = await NostrTools.nip04.decrypt(
+        this.account.privkey,
+        peerPubkey,
+        e.content
+      );
+
+      this._persistDMEvent(e, peerPubkey);
+
+      if (isJson(e.content)) {
+        await this._handleStructuredDm(e, peerPubkey);
+      }
     },
 
     async _processDeleteEvents(e) {
@@ -1688,17 +1714,9 @@ export default defineComponent({
       });
     },
 
-    async _handleIncommingDm(event, peerPubkey) {
+    async _handleStructuredDm(event, peerPubkey) {
       try {
-        const plainText = await NostrTools.nip04.decrypt(
-          this.account.privkey,
-          peerPubkey,
-          event.content
-        );
-        console.log("### plainText", plainText);
-        if (!isJson(plainText)) return;
-
-        const jsonData = JSON.parse(plainText);
+        const jsonData = JSON.parse(event.content);
         if ([0, 1, 2].indexOf(jsonData.type) !== -1) {
           this._persistOrderUpdate(peerPubkey, event.created_at, jsonData);
         }
@@ -1775,9 +1793,9 @@ export default defineComponent({
       );
     },
 
-    _persistDMEvent(event) {
+    _persistDMEvent(event, peerPubkey) {
       const dms = this.$q.localStorage.getItem(
-        `nostrmarket.dm.${event.pubkey}`
+        `nostrmarket.dm.${peerPubkey}`
       ) || {
         events: [],
         lastCreatedAt: 0,
@@ -1788,7 +1806,7 @@ export default defineComponent({
       dms.events.push(event);
       dms.events.sort((a, b) => a - b);
       dms.lastCreatedAt = dms.events[dms.events.length - 1].created_at;
-      this.$q.localStorage.set(`nostrmarket.dm.${event.pubkey}`, dms);
+      this.$q.localStorage.set(`nostrmarket.dm.${peerPubkey}`, dms);
     },
 
     _persistOrderUpdate(pubkey, eventCreatedAt, orderUpdate) {
