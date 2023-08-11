@@ -87,7 +87,7 @@
             label="Write a message"
           >
             <template v-slot:append>
-              <q-icon name="send" class="cursor-pointer" />
+              <q-icon name="send" class="cursor-pointer" color="secondary" @click="sendDirectMesage"  />
             </template>
           </q-input>
         </q-form>
