@@ -19,7 +19,7 @@
       <q-card-section style="width: 100%">
         <div style="width: 100%" class="q-pa-md row justify-center">
           <div style="width: 100%">
-            <q-scroll-area style="height: 500px;">
+            <q-scroll-area style="height: 500px">
               <q-chat-message
                 v-for="(dmEvent, index) in dmEvents"
                 :key="index"
@@ -65,9 +65,32 @@
                   <span v-text="dmEvent.message"></span>
                 </div>
               </q-chat-message>
+              <div id="bottom-user-chat"></div>
             </q-scroll-area>
           </div>
         </div>
+      </q-card-section>
+    </q-card-section>
+    <q-separator />
+    <q-card-section horizontal>
+      <q-card-section class="col-sm-2 col-md-4"> </q-card-section>
+      <!-- <q-separator vertical /> -->
+      <q-card-section style="width: 100%">
+        <q-form @submit="sendDirectMesage" class="auto-width">
+          <q-input
+            class="rounded-pill"
+            style="width: 100%"
+            rounded
+            outlined
+            clearable
+            v-model.trim="newMessage"
+            label="Write a message"
+          >
+            <template v-slot:append>
+              <q-icon name="send" class="cursor-pointer" />
+            </template>
+          </q-input>
+        </q-form>
       </q-card-section>
     </q-card-section>
   </q-card>
@@ -86,12 +109,11 @@ export default defineComponent({
       selectedPubkey: null,
       selectedProfile: null,
       dmEvents: [],
+      newMessage: null,
     };
   },
   watch: {
     events(n) {
-      console.log("### watch n", n);
-
       this.dmEvents = (n?.events || []).map((e) => {
         const sent = this.accountPubkey === e.pubkey;
         const dm = {
@@ -114,11 +136,20 @@ export default defineComponent({
   },
   methods: {
     pubkeySelected(pubkey) {
-      console.log("### pubkeySelected", pubkey);
       this.selectedPubkey = pubkey;
       this.selectedProfile = this.profiles.find((p) => p.pubkey === pubkey);
-      console.log("### selectedProfile", this.selectedProfile);
       this.$emit("chat-selected", pubkey);
+      setTimeout(() => {
+        document.getElementById("bottom-user-chat").scrollIntoView();
+      }, 100);
+    },
+    sendDirectMesage() {
+      console.log("#### sendDirectMesage", this.newMessage);
+      this.$emit("send-dm", {
+        to: this.selectedPubkey,
+        message: this.newMessage,
+      });
+      this.newMessage = null;
     },
   },
   created: async function () {
