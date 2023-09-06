@@ -317,7 +317,6 @@
       @chat-selected="handleDmChatSelected"
     ></user-chat>
 
-
     <shopping-cart-list
       v-else-if="activePage === 'shopping-cart-list'"
       :carts="shoppingCarts"
@@ -599,7 +598,7 @@ export default defineComponent({
       filterData: {
         categories: [],
       },
-      dmEvents: [],
+      dmEvents: null,
 
       activeMarket: null,
       activeStall: null,
@@ -1039,16 +1038,20 @@ export default defineComponent({
         },
       ];
       if (this.account?.pubkey) {
+        let since = 0;
+        if (!this._pubkeyHasDms(this.account.pubkey)) {
+          since = relayData.lastEventAt + 1;
+        }
         filters.push(
           {
             kinds: [4],
             "#p": [this.account.pubkey],
-            since: relayData.lastEventAt + 1,
+            since,
           },
           {
             kinds: [4],
             authors: [this.account.pubkey],
-            since: relayData.lastEventAt + 1,
+            since,
           }
         );
       }
@@ -1060,6 +1063,7 @@ export default defineComponent({
       const filters = this._buildRelayFilters(relayData);
 
       const events = await relayData.relay.list(filters);
+      console.log("### _queryRelay.filters", relayData.relayUrl, filters);
       console.log("### _queryRelay.events", relayData.relayUrl, events);
 
       if (events?.length) {
@@ -1232,7 +1236,6 @@ export default defineComponent({
       );
 
       this._persistDMEvent(e, peerPubkey);
-
       if (isJson(e.content)) {
         await this._handleStructuredDm(e, peerPubkey);
       }
@@ -1616,8 +1619,14 @@ export default defineComponent({
     /////////////////////////////////////////////////////////// DIRRECT MESSAGES ///////////////////////////////////////////////////////////
 
     handleDmChatSelected(pubkey) {
-      console.log("### handleDmChatSelected", pubkey);
-      this.dmEvents =this.$q.localStorage.getItem(`nostrmarket.dm.${pubkey}`) || [];
+      this.dmEvents =
+        this.$q.localStorage.getItem(`nostrmarket.dm.${pubkey}`) || {};
+    },
+
+    _pubkeyHasDms(pubkey) {
+      const dms =
+        this.$q.localStorage.getItem(`nostrmarket.dm.${pubkey}`) || [];
+      return dms.length !== 0;
     },
 
     /////////////////////////////////////////////////////////// ORDERS ///////////////////////////////////////////////////////////
@@ -1815,7 +1824,14 @@ export default defineComponent({
       dms.events.push(event);
       dms.events.sort((a, b) => a.created_at - b.created_at);
       dms.lastCreatedAt = dms.events[dms.events.length - 1].created_at;
+      dms.peerPubkey = peerPubkey;
+
       this.$q.localStorage.set(`nostrmarket.dm.${peerPubkey}`, dms);
+
+      if (this.dmEvents?.peerPubkey === peerPubkey) {
+        this.dmEvents =
+          this.$q.localStorage.getItem(`nostrmarket.dm.${peerPubkey}`) || {};
+      }
     },
 
     _persistOrderUpdate(pubkey, eventCreatedAt, orderUpdate) {

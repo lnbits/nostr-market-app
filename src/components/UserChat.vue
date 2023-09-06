@@ -20,51 +20,53 @@
         <div style="width: 100%" class="q-pa-md row justify-center">
           <div style="width: 100%">
             <q-scroll-area style="height: 500px">
-              <q-chat-message
-                v-for="(dmEvent, index) in dmEvents"
-                :key="index"
-                :name="
-                  dmEvent.sent ? 'me' : selectedProfile?.name || 'merchant'
-                "
-                :sent="dmEvent.sent"
-                :avatar="dmEvent.avatar"
-                :stamp="dmEvent.dateFrom"
-              >
-                <div v-if="dmEvent.isJson">
-                  <div v-if="dmEvent.message.type === 0">
-                    <strong>New order:</strong>
+              <div v-if="dmEvents">
+                <q-chat-message
+                  v-for="(dmEvent, index) in dmEvents"
+                  :key="index"
+                  :name="
+                    dmEvent.sent ? 'me' : selectedProfile?.name || 'merchant'
+                  "
+                  :sent="dmEvent.sent"
+                  :avatar="dmEvent.avatar"
+                  :stamp="dmEvent.dateFrom"
+                >
+                  <div v-if="dmEvent.isJson">
+                    <div v-if="dmEvent.message.type === 0">
+                      <strong>New order:</strong>
+                    </div>
+                    <div v-else-if="dmEvent.message.type === 1">
+                      <strong>Reply sent for order: </strong>
+                    </div>
+                    <div v-else-if="dmEvent.message.type === 2">
+                      <q-badge v-if="dmEvent.message.paid" color="green"
+                        >Paid
+                      </q-badge>
+                      <q-badge v-if="dmEvent.message.shipped" color="green"
+                        >Shipped
+                      </q-badge>
+                    </div>
+                    <div>
+                      <span v-text="dmEvent.message.message"></span>
+                      <q-badge class="gt-sm" color="orange">
+                        <span
+                          v-text="dmEvent.message.id"
+                          @click="showOrderDetails(dmEvent.message.id)"
+                          class="cursor-pointer"
+                        ></span>
+                      </q-badge>
+                    </div>
+                    <q-badge
+                      @click="showMessageRawData(index)"
+                      class="cursor-pointer"
+                      >...</q-badge
+                    >
                   </div>
-                  <div v-else-if="dmEvent.message.type === 1">
-                    <strong>Reply sent for order: </strong>
+                  <div v-else>
+                    <span v-text="dmEvent.message"></span>
                   </div>
-                  <div v-else-if="dmEvent.message.type === 2">
-                    <q-badge v-if="dmEvent.message.paid" color="green"
-                      >Paid
-                    </q-badge>
-                    <q-badge v-if="dmEvent.message.shipped" color="green"
-                      >Shipped
-                    </q-badge>
-                  </div>
-                  <div>
-                    <span v-text="dmEvent.message.message"></span>
-                    <q-badge class="gt-sm" color="orange">
-                      <span
-                        v-text="dmEvent.message.id"
-                        @click="showOrderDetails(dmEvent.message.id)"
-                        class="cursor-pointer"
-                      ></span>
-                    </q-badge>
-                  </div>
-                  <q-badge
-                    @click="showMessageRawData(index)"
-                    class="cursor-pointer"
-                    >...</q-badge
-                  >
-                </div>
-                <div v-else>
-                  <span v-text="dmEvent.message"></span>
-                </div>
-              </q-chat-message>
+                </q-chat-message>
+              </div>
               <div id="bottom-user-chat"></div>
             </q-scroll-area>
           </div>
@@ -87,7 +89,12 @@
             label="Write a message"
           >
             <template v-slot:append>
-              <q-icon name="send" class="cursor-pointer" color="secondary" @click="sendDirectMesage"  />
+              <q-icon
+                name="send"
+                class="cursor-pointer"
+                color="secondary"
+                @click="sendDirectMesage"
+              />
             </template>
           </q-input>
         </q-form>
@@ -132,6 +139,9 @@ export default defineComponent({
         }
         return dm;
       });
+      setTimeout(() => {
+        document.getElementById("bottom-user-chat").scrollIntoView();
+      }, 0);
     },
   },
   methods: {
