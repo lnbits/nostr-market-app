@@ -589,8 +589,6 @@ export default defineComponent({
 
       groupByStall: false,
 
-      relays: new Set(),
-
       stalls: [],
       products: [],
       orders: {},
