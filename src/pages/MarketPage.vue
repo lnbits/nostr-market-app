@@ -817,7 +817,8 @@ export default defineComponent({
       );
     },
     dmPeers() {
-      // todo: does not refresh
+      // just to force refresh, do not remove
+      const temp = this.dmEvents;
       const prefix = "nostrmarket.dm.";
       const dmKeys = this.$q.localStorage
         .getAllKeys()
@@ -1878,6 +1879,9 @@ export default defineComponent({
       if (this.dmEvents?.peerPubkey === peerPubkey) {
         this.dmEvents =
           this.$q.localStorage.getItem(`nostrmarket.dm.${peerPubkey}`) || {};
+      } else {
+        // just to force refresh
+        this.dmEvents = { ...this.dmEvents };
       }
     },
 
