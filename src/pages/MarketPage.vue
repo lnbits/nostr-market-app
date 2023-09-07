@@ -1623,27 +1623,39 @@ export default defineComponent({
     },
 
     async sendDirectMessage(dm) {
-      console.log("### sendDirectMessage", dm);
-      if (!this.account?.pubkey) return;
-      const event = {
-        ...(await NostrTools.getBlankEvent()),
-        kind: 4,
-        created_at: Math.floor(Date.now() / 1000),
-        tags: [["p", dm.to]],
-        pubkey: this.account.pubkey,
-      };
-      event.content = await NostrTools.nip04.encrypt(
-        this.account.privkey,
-        dm.to,
-        dm.message
-      );
+      if (!this.account?.pubkey) {
+        this.$q.notify({
+          type: "warning",
+          message: "Cannot send message. No user logged in!",
+        });
+        return;
+      }
+      try {
+        const event = {
+          ...(await NostrTools.getBlankEvent()),
+          kind: 4,
+          created_at: Math.floor(Date.now() / 1000),
+          tags: [["p", dm.to]],
+          pubkey: this.account.pubkey,
+        };
+        event.content = await NostrTools.nip04.encrypt(
+          this.account.privkey,
+          dm.to,
+          dm.message
+        );
 
-      event.id = NostrTools.getEventHash(event);
-      event.sig = await NostrTools.signEvent(event, this.account.privkey);
+        event.id = NostrTools.getEventHash(event);
+        event.sig = await NostrTools.signEvent(event, this.account.privkey);
 
-      await this._sendDmEvent(event);
-      event.content = dm.message
-      this._persistDMEvent(event, dm.to)
+        await this._sendDmEvent(event);
+        event.content = dm.message;
+        this._persistDMEvent(event, dm.to);
+      } catch (error) {
+        this.$q.notify({
+          type: "warning",
+          message: "Failed to send message!",
+        });
+      }
     },
 
     async _sendDmEvent(event) {
@@ -1724,7 +1736,6 @@ export default defineComponent({
         show: !!relayCount,
       };
     },
-
 
     _handlePaymentRequest(json) {
       if (json.id && json.id !== this.activeOrderId) {
