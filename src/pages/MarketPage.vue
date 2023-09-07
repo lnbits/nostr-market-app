@@ -1038,10 +1038,8 @@ export default defineComponent({
         },
       ];
       if (this.account?.pubkey) {
-        let since = 0;
-        if (!this._pubkeyHasDms(this.account.pubkey)) {
-          since = relayData.lastEventAt + 1;
-        }
+        const since = this._noDmEvents() ? 0 : relayData.lastEventAt + 1;
+
         filters.push(
           {
             kinds: [4],
@@ -1623,10 +1621,12 @@ export default defineComponent({
         this.$q.localStorage.getItem(`nostrmarket.dm.${pubkey}`) || {};
     },
 
-    _pubkeyHasDms(pubkey) {
-      const dms =
-        this.$q.localStorage.getItem(`nostrmarket.dm.${pubkey}`) || [];
-      return dms.length !== 0;
+    _noDmEvents() {
+      const dms = this.$q.localStorage
+        .getAllKeys()
+        .filter((key) => key.startsWith("nostrmarket.dm"));
+
+      return dms.length === 0;
     },
 
     /////////////////////////////////////////////////////////// ORDERS ///////////////////////////////////////////////////////////
