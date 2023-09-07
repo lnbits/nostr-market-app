@@ -25,7 +25,7 @@
                   v-for="(dmEvent, index) in dmEvents"
                   :key="index"
                   :name="
-                    dmEvent.sent ? 'me' : selectedProfile?.name || 'merchant'
+                    dmEvent.sent ? 'me' : selectedProfile?.name || pubkeyAlias(selectedPubkey)
                   "
                   :sent="dmEvent.sent"
                   :avatar="dmEvent.avatar"
@@ -105,6 +105,12 @@
 
 <script>
 import { defineComponent } from "vue";
+import {
+  uniqueNamesGenerator,
+  adjectives,
+  colors,
+  animals,
+} from "unique-names-generator";
 import UserProfile from "./UserProfile.vue";
 
 export default defineComponent({
@@ -148,6 +154,7 @@ export default defineComponent({
     pubkeySelected(pubkey) {
       this.selectedPubkey = pubkey;
       this.selectedProfile = this.profiles.find((p) => p.pubkey === pubkey);
+      console.log('### this.selectedProfile', this.selectedProfile)
       this.$emit("chat-selected", pubkey);
       setTimeout(() => {
         document.getElementById("bottom-user-chat").scrollIntoView();
@@ -162,6 +169,15 @@ export default defineComponent({
       });
       this.newMessage = null;
     },
+    pubkeyAlias(pubkey) {
+      return uniqueNamesGenerator({
+        dictionaries: [adjectives, animals, colors],
+        length: 2,
+        separator: " ",
+        style: "capital",
+        seed: pubkey,
+      });
+    }
   },
   created: async function () {
     console.log("### accoutnPubkey", this.accountPubkey);
