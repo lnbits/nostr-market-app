@@ -153,8 +153,9 @@ export default defineComponent({
         document.getElementById("bottom-user-chat").scrollIntoView();
       }, 100);
     },
-    sendDirectMesage() {
+    async sendDirectMesage() {
       console.log("#### sendDirectMesage", this.newMessage);
+
       this.$emit("send-dm", {
         to: this.selectedPubkey,
         message: this.newMessage,

@@ -315,6 +315,7 @@
       :profiles="profiles"
       :events="dmEvents"
       @chat-selected="handleDmChatSelected"
+      @send-dm="sendDirectMessage"
     ></user-chat>
 
     <shopping-cart-list
@@ -1621,6 +1622,40 @@ export default defineComponent({
         this.$q.localStorage.getItem(`nostrmarket.dm.${pubkey}`) || {};
     },
 
+    async sendDirectMessage(dm) {
+      console.log("### sendDirectMessage", dm);
+      if (!this.account?.pubkey) return;
+      const event = {
+        ...(await NostrTools.getBlankEvent()),
+        kind: 4,
+        created_at: Math.floor(Date.now() / 1000),
+        tags: [["p", dm.to]],
+        pubkey: this.account.pubkey,
+      };
+      event.content = await NostrTools.nip04.encrypt(
+        this.account.privkey,
+        dm.to,
+        dm.message
+      );
+
+      event.id = NostrTools.getEventHash(event);
+      event.sig = await NostrTools.signEvent(event, this.account.privkey);
+
+      await this._sendDmEvent(event);
+      event.content = dm.message
+      this._persistDMEvent(event, dm.to)
+    },
+
+    async _sendDmEvent(event) {
+      const toPubkey = event.tags.filter((t) => t[0] === "p").map((t) => t[1]);
+
+      let relays = this._findRelaysForMerchant(toPubkey[0]);
+      if (!relays?.length) {
+        relays = [...defaultRelays];
+      }
+      await this._publishEventToRelays(event, relays);
+    },
+
     _noDmEvents() {
       const dms = this.$q.localStorage
         .getAllKeys()
@@ -1647,7 +1682,7 @@ export default defineComponent({
         event.id = NostrTools.getEventHash(event);
         event.sig = await NostrTools.signEvent(event, this.account.privkey);
 
-        this._sendOrderEvent(event);
+        await this._sendOrderEvent(event);
         this._persistOrderUpdate(
           this.checkoutStall.pubkey,
           event.created_at,
@@ -1689,6 +1724,7 @@ export default defineComponent({
         show: !!relayCount,
       };
     },
+
 
     _handlePaymentRequest(json) {
       if (json.id && json.id !== this.activeOrderId) {
