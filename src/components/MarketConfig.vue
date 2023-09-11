@@ -320,6 +320,7 @@
 
 <script>
 import { defineComponent } from "vue";
+import _ from 'lodash';
 import UserProfile from "./UserProfile.vue";
 
 export default defineComponent({
@@ -447,10 +448,7 @@ export default defineComponent({
     },
   },
   created: async function () {
-    this.marketData = {
-      ...this.marketData,
-      ...JSON.parse(JSON.stringify(this.market || {})),
-    };
+    this.marketData = _.merge(this.marketData, this.market || {})
     if (!this.readNotes?.merchants) {
       this.tab = "merchants";
     }
