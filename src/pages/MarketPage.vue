@@ -2,7 +2,12 @@
   <q-page>
     <div class="row q-mb-md">
       <div class="col-lg-1 col-md-1 gt-sm">
-        <q-avatar rounded size="64px" class="q-ma-none q-pa-none gt-sm">
+        <q-avatar
+          @click="navigateTo('market')"
+          rounded
+          size="64px"
+          class="q-ma-none q-pa-none gt-sm cursor-pointer"
+        >
           <img v-if="logoImage" :src="logoImage" />
         </q-avatar>
       </div>
@@ -122,7 +127,8 @@
       <q-img
         v-if="bannerImage"
         :src="bannerImage"
-        class="rounded-borders"
+        @click="navigateTo('market')"
+        class="rounded-borders cursor-pointer"
         style="width: 100%; height: 250px"
         cover
       >
