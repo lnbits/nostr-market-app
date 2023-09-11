@@ -42,14 +42,7 @@
               <span v-text="filterCount"></span>
             </q-badge>
           </q-btn>
-          <!-- <q-btn
-            color="gray"
-            icon="settings"
-            flat
-            size="lg"
-            @click="setActivePage('market-config')"
-            ><q-tooltip> Settings</q-tooltip></q-btn
-          > -->
+
           <q-btn
             @click="navigateTo('user-config')"
             color="gray"
@@ -58,15 +51,7 @@
             size="lg"
             ><q-tooltip>User User Config</q-tooltip></q-btn
           >
-          <!-- <q-btn
-            v-else
-            @click="accountDialog.show = true"
-            color="gray"
-            icon="person_add"
-            flat
-            size="lg"
-            ><q-tooltip>User Login</q-tooltip></q-btn
-          > -->
+
           <q-btn
             @click="navigateTo('user-chat')"
             color="gray"
@@ -323,7 +308,15 @@
       @copy-text="copyText"
     ></user-config>
 
-    <user-chat v-else-if="activePage === 'user-chat'"></user-chat>
+    <user-chat
+      v-else-if="activePage === 'user-chat'"
+      :account-pubkey="account?.pubkey"
+      :peer-pubkeys="dmPeers"
+      :profiles="profiles"
+      :events="dmEvents"
+      @chat-selected="handleDmChatSelected"
+      @send-dm="sendDirectMessage"
+    ></user-chat>
 
     <shopping-cart-list
       v-else-if="activePage === 'shopping-cart-list'"
@@ -351,6 +344,7 @@
       :orders="orders"
       :products="products"
       :stalls="stalls"
+      :profiles="profiles"
       @show-invoice="showInvoiceQr"
     ></customer-orders>
     <!-- todo: :merchants="merchants" -->
@@ -605,6 +599,7 @@ export default defineComponent({
       filterData: {
         categories: [],
       },
+      dmEvents: null,
 
       activeMarket: null,
       activeStall: null,
@@ -729,7 +724,6 @@ export default defineComponent({
       if (this.filterData.merchants) total += this.filterData.merchants.length;
       if (this.filterData.stalls) total += this.filterData.stalls.length;
 
-      console.log("### fiterCount", total);
       return total;
     },
     filterStalls() {
@@ -821,6 +815,16 @@ export default defineComponent({
       return Object.values(this.relaysData).filter(
         (r) => r && this.activeMarket.relays.includes(r.relayUrl)
       );
+    },
+    dmPeers() {
+      // just to force refresh, do not remove
+      const temp = this.dmEvents;
+      const prefix = "nostrmarket.dm.";
+      const dmKeys = this.$q.localStorage
+        .getAllKeys()
+        .filter((k) => k.startsWith(prefix));
+
+      return dmKeys.map((k) => k.substring(prefix.length));
     },
   },
 
@@ -1036,16 +1040,18 @@ export default defineComponent({
         },
       ];
       if (this.account?.pubkey) {
+        const since = this._noDmEvents() ? 0 : relayData.lastEventAt + 1;
+
         filters.push(
           {
             kinds: [4],
             "#p": [this.account.pubkey],
-            since: relayData.lastEventAt + 1,
+            since,
           },
           {
             kinds: [4],
             authors: [this.account.pubkey],
-            since: relayData.lastEventAt + 1,
+            since,
           }
         );
       }
@@ -1057,6 +1063,7 @@ export default defineComponent({
       const filters = this._buildRelayFilters(relayData);
 
       const events = await relayData.relay.list(filters);
+      console.log("### _queryRelay.filters", relayData.relayUrl, filters);
       console.log("### _queryRelay.events", relayData.relayUrl, events);
 
       if (events?.length) {
@@ -1211,6 +1218,7 @@ export default defineComponent({
     },
 
     async _processDmEvents(e) {
+      if (!this.account?.pubkey) return;
       const receiverPubkey = e.tags.find(
         ([k, v]) => k === "p" && v && v !== ""
       )[1];
@@ -1219,9 +1227,18 @@ export default defineComponent({
         console.warn("Unexpected DM. Dropped!");
         return;
       }
-      this._persistDMEvent(e);
+
       const peerPubkey = isSentByMe ? receiverPubkey : e.pubkey;
-      await this._handleIncommingDm(e, peerPubkey);
+      e.content = await NostrTools.nip04.decrypt(
+        this.account.privkey,
+        peerPubkey,
+        e.content
+      );
+
+      this._persistDMEvent(e, peerPubkey);
+      if (isJson(e.content)) {
+        await this._handleStructuredDm(e, peerPubkey);
+      }
     },
 
     async _processDeleteEvents(e) {
@@ -1599,6 +1616,67 @@ export default defineComponent({
       this.setActivePage("shopping-cart-checkout");
     },
 
+    /////////////////////////////////////////////////////////// DIRRECT MESSAGES ///////////////////////////////////////////////////////////
+
+    handleDmChatSelected(pubkey) {
+      this.dmEvents =
+        this.$q.localStorage.getItem(`nostrmarket.dm.${pubkey}`) || {};
+    },
+
+    async sendDirectMessage(dm) {
+      if (!this.account?.pubkey) {
+        this.$q.notify({
+          type: "warning",
+          message: "Cannot send message. No user logged in!",
+        });
+        return;
+      }
+      try {
+        const event = {
+          ...(await NostrTools.getBlankEvent()),
+          kind: 4,
+          created_at: Math.floor(Date.now() / 1000),
+          tags: [["p", dm.to]],
+          pubkey: this.account.pubkey,
+        };
+        event.content = await NostrTools.nip04.encrypt(
+          this.account.privkey,
+          dm.to,
+          dm.message
+        );
+
+        event.id = NostrTools.getEventHash(event);
+        event.sig = await NostrTools.signEvent(event, this.account.privkey);
+
+        await this._sendDmEvent(event);
+        event.content = dm.message;
+        this._persistDMEvent(event, dm.to);
+      } catch (error) {
+        this.$q.notify({
+          type: "warning",
+          message: "Failed to send message!",
+        });
+      }
+    },
+
+    async _sendDmEvent(event) {
+      const toPubkey = event.tags.filter((t) => t[0] === "p").map((t) => t[1]);
+
+      let relays = this._findRelaysForMerchant(toPubkey[0]);
+      if (!relays?.length) {
+        relays = [...defaultRelays];
+      }
+      await this._publishEventToRelays(event, relays);
+    },
+
+    _noDmEvents() {
+      const dms = this.$q.localStorage
+        .getAllKeys()
+        .filter((key) => key.startsWith("nostrmarket.dm"));
+
+      return dms.length === 0;
+    },
+
     /////////////////////////////////////////////////////////// ORDERS ///////////////////////////////////////////////////////////
 
     async placeOrder({ event, order, cartId }) {
@@ -1617,7 +1695,7 @@ export default defineComponent({
         event.id = NostrTools.getEventHash(event);
         event.sig = await NostrTools.signEvent(event, this.account.privkey);
 
-        this._sendOrderEvent(event);
+        await this._sendOrderEvent(event);
         this._persistOrderUpdate(
           this.checkoutStall.pubkey,
           event.created_at,
@@ -1702,17 +1780,9 @@ export default defineComponent({
       });
     },
 
-    async _handleIncommingDm(event, peerPubkey) {
+    async _handleStructuredDm(event, peerPubkey) {
       try {
-        const plainText = await NostrTools.nip04.decrypt(
-          this.account.privkey,
-          peerPubkey,
-          event.content
-        );
-        console.log("### plainText", plainText);
-        if (!isJson(plainText)) return;
-
-        const jsonData = JSON.parse(plainText);
+        const jsonData = JSON.parse(event.content);
         if ([0, 1, 2].indexOf(jsonData.type) !== -1) {
           this._persistOrderUpdate(peerPubkey, event.created_at, jsonData);
         }
@@ -1789,9 +1859,9 @@ export default defineComponent({
       );
     },
 
-    _persistDMEvent(event) {
+    _persistDMEvent(event, peerPubkey) {
       const dms = this.$q.localStorage.getItem(
-        `nostrmarket.dm.${event.pubkey}`
+        `nostrmarket.dm.${peerPubkey}`
       ) || {
         events: [],
         lastCreatedAt: 0,
@@ -1800,9 +1870,19 @@ export default defineComponent({
       if (existingEvent) return;
 
       dms.events.push(event);
-      dms.events.sort((a, b) => a - b);
+      dms.events.sort((a, b) => a.created_at - b.created_at);
       dms.lastCreatedAt = dms.events[dms.events.length - 1].created_at;
-      this.$q.localStorage.set(`nostrmarket.dm.${event.pubkey}`, dms);
+      dms.peerPubkey = peerPubkey;
+
+      this.$q.localStorage.set(`nostrmarket.dm.${peerPubkey}`, dms);
+
+      if (this.dmEvents?.peerPubkey === peerPubkey) {
+        this.dmEvents =
+          this.$q.localStorage.getItem(`nostrmarket.dm.${peerPubkey}`) || {};
+      } else {
+        // just to force refresh
+        this.dmEvents = { ...this.dmEvents };
+      }
     },
 
     _persistOrderUpdate(pubkey, eventCreatedAt, orderUpdate) {

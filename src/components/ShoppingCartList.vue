@@ -8,36 +8,11 @@
     <div v-for="cart in carts" :key="cart.id">
       <q-card bordered class="q-mb-md">
         <q-item>
-          <q-item-section avatar>
-            <q-avatar>
-              <img
-                v-if="merchantProfile(cart.merchant)?.picture"
-                :src="merchantProfile(cart.merchant)?.picture"
-              />
-              <img
-                v-else
-                :src="$q.config.staticPath + '/images/blank-avatar.webp'"
-              />
-            </q-avatar>
-          </q-item-section>
-
-          <q-item-section>
-            <q-item-label>
-              <strong>
-                <span v-text="cart.products[0]?.stallName"></span>
-              </strong>
-            </q-item-label>
-            <q-item-label caption>
-              By
-              <span
-                class="ellipsis-2-lines text-wrap"
-                v-text="
-                  merchantProfile(cart.merchant)?.name ||
-                  cart.merchant?.publicKey
-                "
-              ></span>
-            </q-item-label>
-          </q-item-section>
+          <user-profile
+            :pubkey="cart.merchant"
+            :profiles="profiles"
+            :description="cart.products[0]?.stallName"
+          ></user-profile>
           <q-item-section side>
             <div>
               <q-btn @click="removeCart(cart.id)" flat color="pink">
@@ -137,10 +112,12 @@
 
 <script>
 import { defineComponent } from "vue";
+import UserProfile from "./UserProfile.vue";
 
 export default defineComponent({
   name: "ShoppingCartList",
   props: ["carts", "profiles"],
+  components: { UserProfile },
   data: function () {
     return {};
   },
@@ -165,9 +142,6 @@ export default defineComponent({
     },
     proceedToCheckout: function (cart) {
       this.$emit("checkout-cart", cart);
-    },
-    merchantProfile(pubkey) {
-      return this.profiles?.find((p) => p.pubkey === pubkey);
     },
   },
   created() {},

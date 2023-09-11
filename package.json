@@ -15,9 +15,11 @@
   "dependencies": {
     "@chenfengyuan/vue-qrcode": "2",
     "@quasar/extras": "^1.16.4",
+    "jdenticon": "^3.2.0",
     "moment": "^2.29.4",
     "qrcode": "1",
     "quasar": "^2.6.0",
+    "unique-names-generator": "^4.7.1",
     "vue": "^3.0.0",
     "vue-router": "^4.0.0"
   },
