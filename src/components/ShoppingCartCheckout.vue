@@ -215,8 +215,9 @@ export default defineComponent({
       if (!this.shippingZone) {
         return "Shipping Zone";
       }
-      const zoneName = this.shippingZone.name.substring(0, 10);
-      if (this.shippingZone?.name.length < 10) {
+      let zoneName = this.shippingZone.name || this.shippingZone.id || "Shipping Zone"
+      zoneName = zoneName.substring(0, 10);
+      if (zoneName.length < 10) {
         return zoneName;
       }
       return zoneName + "...";

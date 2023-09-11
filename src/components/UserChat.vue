@@ -154,7 +154,6 @@ export default defineComponent({
     pubkeySelected(pubkey) {
       this.selectedPubkey = pubkey;
       this.selectedProfile = this.profiles.find((p) => p.pubkey === pubkey);
-      console.log('### this.selectedProfile', this.selectedProfile)
       this.$emit("chat-selected", pubkey);
       setTimeout(() => {
         document.getElementById("bottom-user-chat").scrollIntoView();
