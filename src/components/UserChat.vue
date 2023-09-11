@@ -160,8 +160,6 @@ export default defineComponent({
       }, 100);
     },
     async sendDirectMesage() {
-      console.log("#### sendDirectMesage", this.newMessage);
-
       this.$emit("send-dm", {
         to: this.selectedPubkey,
         message: this.newMessage,
@@ -179,8 +177,6 @@ export default defineComponent({
     }
   },
   created: async function () {
-    console.log("### accoutnPubkey", this.accountPubkey);
-    console.log("### peer-pubkes", this.peerPubkeys);
   },
 });
 </script>
