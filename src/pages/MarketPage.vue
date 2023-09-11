@@ -49,7 +49,7 @@
             :icon="account ? 'perm_identity' : 'person_add'"
             flat
             size="lg"
-            ><q-tooltip>User User Config</q-tooltip></q-btn
+            ><q-tooltip>User Config</q-tooltip></q-btn
           >
 
           <q-btn
