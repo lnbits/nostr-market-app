@@ -118,10 +118,14 @@
     </div>
     <q-card v-if="!markets.length" class="q-mb-sm">
       <q-card-section class="bg-secondary text-white">
-        <div class="text-h6"> There are no relays configured at this moment.</div>
-        <div class="text-subtitle2">Start by creating or importing a market.</div>
+        <div class="text-h6">
+          There are no relays configured at this moment.
+        </div>
+        <div class="text-subtitle2">
+          Start by creating or importing a market.
+        </div>
       </q-card-section>
-      </q-card>
+    </q-card>
 
     <div v-if="isLoading" class="row q-mb-sm">
       <div class="col-12 text-center">
@@ -943,13 +947,13 @@ export default defineComponent({
         };
         this.accountDialog.show = false;
         this.account = this.$q.localStorage.getItem("nostrmarket.account");
-        await this._requeryAllRelays()
+        await this._requeryAllRelays();
       }
       this.accountDialog.show = false;
     },
     logout() {
       window.localStorage.removeItem("nostrmarket.account");
-      // todo: clear all data?
+      this._clearNonAccountData()
       window.location.href = window.location.origin + window.location.pathname;
       this.account = null;
       this.accountMetadata = null;
@@ -963,18 +967,20 @@ export default defineComponent({
           )
         )
         .onOk(async () => {
-          this.$q.localStorage
-            .getAllKeys()
-            .filter((key) => key !== "nostrmarket.account")
-            .forEach((key) => window.localStorage.removeItem(key));
-
-          this.orders = [];
-          this.config = { opts: null };
-          this.shoppingCarts = [];
-          this.checkoutCart = null;
-          window.location.href =
-            window.location.origin + window.location.pathname;
+          this._clearNonAccountData();
+          window.location.href = window.location.origin + window.location.pathname;
         });
+    },
+    _clearNonAccountData() {
+      this.$q.localStorage
+        .getAllKeys()
+        .filter((key) => key !== "nostrmarket.account")
+        .forEach((key) => window.localStorage.removeItem(key));
+
+      this.orders = [];
+      this.config = { opts: null };
+      this.shoppingCarts = [];
+      this.checkoutCart = null;
     },
 
     /////////////////////////////////////////////////////////// RELAYS ///////////////////////////////////////////////////////////
