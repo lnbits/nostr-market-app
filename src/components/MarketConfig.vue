@@ -422,7 +422,7 @@ export default defineComponent({
       this.$emit("market-update", this.cloneMarketData());
     },
     publishNaddr() {
-      this.$emit("publish-naddr");
+      this.$emit("publish-naddr", this.cloneMarketData());
     },
     deleteMarket() {
       this.$emit("delete-market", this.cloneMarketData());

@@ -1453,8 +1453,8 @@ export default defineComponent({
           this.navigateTo("market");
           this.updateUiConfig(this.markets[0]);
         }
-        market.opts.merchants.forEach(this._handleRemoveMerchant);
-        market.relays.forEach(this._handleRemovedRelay);
+        market.opts.merchants?.forEach(this._handleRemoveMerchant);
+        market.relays?.forEach(this._handleRemovedRelay);
 
         this._persistStallsAndProducts();
         this._persistRelaysData();
@@ -1476,7 +1476,7 @@ export default defineComponent({
       this.activeMarket = this.markets[index];
       this.transitToPage("market-config");
     },
-    async publishNaddr() {
+    async publishNaddr(marketData) {
       if (!this.account?.privkey) {
         this.openAccountDialog();
         this.$q.notify({
@@ -1486,14 +1486,12 @@ export default defineComponent({
         return;
       }
 
-      const merchants = []; // todo: get from market
-      const { name, about, ui } = this.config?.opts || {};
-      const content = { merchants, name, about, ui };
-      const identifier = this.config.identifier ?? crypto.randomUUID();
+      console.log("### marketData", marketData);
+      const identifier = marketData.d ?? crypto.randomUUID();
       const event = {
         ...(await NostrTools.getBlankEvent()),
         kind: 30019,
-        content: JSON.stringify(content),
+        content: JSON.stringify(marketData.opts),
         created_at: Math.floor(Date.now() / 1000),
         tags: [["d", identifier]],
         pubkey: this.account.pubkey,
@@ -1502,13 +1500,16 @@ export default defineComponent({
       try {
         event.sig = await NostrTools.signEvent(event, this.account.privkey);
 
-        // todo: replace with market relays
-        const pub = this.pool.publish(Array.from([]), event);
-        pub.on("ok", () => {
-          console.debug(`Config event was sent`);
-        });
-        pub.on("failed", (error) => {
-          console.error(error);
+        const relayCount = await this._publishEventToRelays(
+          event,
+          marketData.relays
+        );
+
+        this.$q.notify({
+          type: relayCount ? "positive" : "warning",
+          message: relayCount
+            ? `The market profile has been published tp (${relayCount} relays)!`
+            : "The market profile could not be published",
         });
       } catch (err) {
         console.error(err);
@@ -1523,7 +1524,7 @@ export default defineComponent({
         pubkey: event.pubkey,
         kind: 30019,
         identifier: identifier,
-        relays: [], //todo: replace with market relays
+        relays: marketData.relays
       });
       this.copyText(naddr);
     },
