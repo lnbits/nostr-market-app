@@ -123,6 +123,7 @@
 </template>
 
 <script>
+import moment from 'moment'
 import { defineComponent } from "vue";
 import {
   uniqueNamesGenerator,
@@ -158,7 +159,7 @@ export default defineComponent({
             ? $q.config.staticPath + "/images/blank-avatar.webp"
             : this.selectedProfile?.picture ||
               $q.config.staticPath + "/images/blank-avatar.webp",
-          dateFrom: e.created_at + "",
+          dateFrom: moment(e.created_at * 1000).fromNow(),
         };
         if (isNaN(e.content) && isJson(e.content)) {
           dm.isJson = true;
