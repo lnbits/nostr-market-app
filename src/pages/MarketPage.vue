@@ -614,6 +614,11 @@ export default defineComponent({
       searchText: null,
       filterData: {
         categories: [],
+        merchants: [],
+        stalls: [],
+        currency: null,
+        priceFrom: null,
+        priceTo: null,
       },
       dmEvents: null,
 
@@ -861,6 +866,7 @@ export default defineComponent({
   methods: {
     async _handleQueryParams(params) {
       const merchantPubkey = params.get("merchant");
+      console.log("### merchantPubkey", merchantPubkey);
       const stallId = params.get("stall");
       const productId = params.get("product");
 
@@ -872,21 +878,30 @@ export default defineComponent({
         }
         this.activeStall = stallId;
       }
-      // todo: support URL
-      // if (
-      //   merchantPubkey &&
-      //   !this.xmerchants.find((m) => m.publicKey === merchantPubkey)
-      // ) {
-      //   this.$q
-      //     .dialog(
-      //       confirm(
-      //         "We found a merchant pubkey in your request. Do you want to add it to the merchants list?"
-      //       )
-      //     )
-      //     .onOk(async () => {
-      //       this.xxmerchants.push({ publicKey: merchantPubkey, profile: null });
-      //     });
-      // }
+      if (merchantPubkey) {
+        if (!isValidKey(merchantPubkey)) {
+          this.$q.notify({
+            message: "Invalid merchant public key!",
+            icon: "warning",
+          });
+        } else if (this.allMerchants.includes(merchantPubkey)) {
+          this.$q.notify({
+            message: "Request (URL) merchant already exists!",
+            type: "positive",
+          });
+        } else {
+          this.$q
+            .dialog(
+              confirm(
+                "We found a merchant pubkey in your request. " +
+                  "Do you want to add it to the merchants list?"
+              )
+            )
+            .onOk(async () => {
+              this.createMarket(false, [merchantPubkey]);
+            });
+        }
+      }
     },
     _applyUiConfigs(opts = {}) {
       const { name, about, ui } = opts;
@@ -953,7 +968,7 @@ export default defineComponent({
     },
     logout() {
       window.localStorage.removeItem("nostrmarket.account");
-      this._clearNonAccountData()
+      this._clearNonAccountData();
       window.location.href = window.location.origin + window.location.pathname;
       this.account = null;
       this.accountMetadata = null;
@@ -968,7 +983,8 @@ export default defineComponent({
         )
         .onOk(async () => {
           this._clearNonAccountData();
-          window.location.href = window.location.origin + window.location.pathname;
+          window.location.href =
+            window.location.origin + window.location.pathname;
         });
     },
     _clearNonAccountData() {
@@ -1291,7 +1307,7 @@ export default defineComponent({
 
     /////////////////////////////////////////////////////////// MARKET ///////////////////////////////////////////////////////////
 
-    async createMarket(navigateToConfig) {
+    async createMarket(navigateToConfig, merchants) {
       try {
         this.setActivePage("loading");
         const market = {
@@ -1301,7 +1317,7 @@ export default defineComponent({
           selected: true,
           opts: {
             name: "New Market",
-            merchants: [],
+            merchants: merchants || [],
           },
         };
         this.markets.unshift(market);
