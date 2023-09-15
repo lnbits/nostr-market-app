@@ -116,6 +116,16 @@
         </template>
       </q-virtual-scroll>
     </div>
+    <q-card v-if="!markets.length" class="q-mb-sm">
+      <q-card-section class="bg-secondary text-white">
+        <div class="text-h6">
+          There are no relays configured at this moment.
+        </div>
+        <div class="text-subtitle2">
+          Start by creating or importing a market.
+        </div>
+      </q-card-section>
+    </q-card>
 
     <div v-if="isLoading" class="row q-mb-sm">
       <div class="col-12 text-center">
@@ -937,11 +947,13 @@ export default defineComponent({
         };
         this.accountDialog.show = false;
         this.account = this.$q.localStorage.getItem("nostrmarket.account");
+        await this._requeryAllRelays();
       }
       this.accountDialog.show = false;
     },
     logout() {
       window.localStorage.removeItem("nostrmarket.account");
+      this._clearNonAccountData()
       window.location.href = window.location.origin + window.location.pathname;
       this.account = null;
       this.accountMetadata = null;
@@ -955,18 +967,20 @@ export default defineComponent({
           )
         )
         .onOk(async () => {
-          this.$q.localStorage
-            .getAllKeys()
-            .filter((key) => key !== "nostrmarket.account")
-            .forEach((key) => window.localStorage.removeItem(key));
-
-          this.orders = [];
-          this.config = { opts: null };
-          this.shoppingCarts = [];
-          this.checkoutCart = null;
-          window.location.href =
-            window.location.origin + window.location.pathname;
+          this._clearNonAccountData();
+          window.location.href = window.location.origin + window.location.pathname;
         });
+    },
+    _clearNonAccountData() {
+      this.$q.localStorage
+        .getAllKeys()
+        .filter((key) => key !== "nostrmarket.account")
+        .forEach((key) => window.localStorage.removeItem(key));
+
+      this.orders = [];
+      this.config = { opts: null };
+      this.shoppingCarts = [];
+      this.checkoutCart = null;
     },
 
     /////////////////////////////////////////////////////////// RELAYS ///////////////////////////////////////////////////////////
@@ -1026,6 +1040,12 @@ export default defineComponent({
         relayData.error = `${error}`;
         console.warn(`Failed to connect to ${relayData.relayUrl}`);
       }
+    },
+
+    async _requeryAllRelays() {
+      Object.keys(this.relaysData).forEach(async (relayKey) => {
+        await this._requeryRelay(relayKey);
+      });
     },
 
     async _requeryRelay(relayKey) {
@@ -1504,7 +1524,7 @@ export default defineComponent({
         await this._processEvents(events, relayData);
 
         relayData.merchants.push(merchantPubkey);
-        this._requeryRelay(relayKey);
+        await this._requeryRelay(relayKey);
       });
     },
 
@@ -1520,7 +1540,7 @@ export default defineComponent({
         relayData.merchants = [
           ...new Set(relayData.merchants.concat(market.opts.merchants)),
         ];
-        this._requeryRelay(relayKey);
+        await this._requeryRelay(relayKey);
       } else {
         await this._loadRelayData(relayUrl, market.opts.merchants);
         await this._connectToRelay(relayKey);
@@ -1540,14 +1560,14 @@ export default defineComponent({
       this._removeSubscriptionsForMerchant(merchantPubkey);
     },
     _removeSubscriptionsForMerchant(merchantPubkey) {
-      Object.keys(this.relaysData).forEach((relayKey) => {
+      Object.keys(this.relaysData).forEach(async (relayKey) => {
         const relayData = this.relaysData[relayKey];
         if (!relayData.merchants.includes(merchantPubkey)) return;
         relayData.merchants = relayData.merchants.filter(
           (m) => m !== merchantPubkey
         );
 
-        this._requeryRelay(relayKey);
+        await this._requeryRelay(relayKey);
       });
     },
     async _handleRemovedRelay(relayUrl) {
