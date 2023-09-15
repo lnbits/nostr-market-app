@@ -116,6 +116,12 @@
         </template>
       </q-virtual-scroll>
     </div>
+    <q-card v-if="!markets.length" class="q-mb-sm">
+      <q-card-section class="bg-secondary text-white">
+        <div class="text-h6"> There are no relays configured at this moment.</div>
+        <div class="text-subtitle2">Start by creating or importing a market.</div>
+      </q-card-section>
+      </q-card>
 
     <div v-if="isLoading" class="row q-mb-sm">
       <div class="col-12 text-center">
