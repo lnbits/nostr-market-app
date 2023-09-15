@@ -634,7 +634,7 @@ export default defineComponent({
       defaultBanner: this.$q.config.staticPath + "/images/nostr-cover.png",
       defaultLogo: this.$q.config.staticPath + "/images/nostr-avatar.png",
       defaultMarketNaddr:
-        "naddr1qqjrqd3jv9skvwfc956rserz956xyeps94snwd3h95cn2ctr8ymrqdpe89jxzqg5waehxw309aex2mrp0yhxgctdw4eju6t0qyv8wumn8ghj7un9d3shjtnndehhyapwwdhkx6tpdsq36amnwvaz7tmwdaehgu3dwp6kytnhv4kxcmmjv3jhytnwv46qzxthwden5te0dehhxarj9eax2cn9v3jk2tnrd3hh2eqpramhxue69uhkummnw3ezuampd3kx2ar0veekzar0wd5xjtnrdaksyg96ypff6u56q9tk99qnp2kghg5ynuse3v7wdu0xxkurdlggj82gmspsgqqqw4psj5pe0p",
+        "naddr1qqjr2e34v3jrzd3e95ensdfn956rywps94snwcmr95crvepexc6kxcfcxqmnvqg5waehxw309aex2mrp0yhxgctdw4eju6t0qyv8wumn8ghj7un9d3shjtnndehhyapwwdhkx6tpdsq36amnwvaz7tmwdaehgu3dwp6kytnhv4kxcmmjv3jhytnwv46qzxthwden5te0dehhxarj9eax2cn9v3jk2tnrd3hh2eqprfmhxue69uhhyetvv9ujummjv9hxwetsd9kxctnyv4mqzrthwden5te0dehhxtnvdakqz9rhwden5te0wfjkccte9ehx7um5wghxyecpzpmhxue69uhkummnw3ezuamfdejsz9thwden5te0v4jx2m3wdehhxarj9ekxzmnyqgstle9w09rt8y7xdlqs33v23vqvdtqx6j6j2wa4984g9n77tppx2tqrqsqqqa2ruusd5z",
       readNotes: {
         merchants: false,
         marketUi: false,
@@ -1318,13 +1318,15 @@ export default defineComponent({
           opts: {
             name: "New Market",
             merchants: merchants || [],
+            ui: {}
           },
         };
         this.markets.unshift(market);
         this.$q.localStorage.set("nostrmarket.markets", this.markets);
 
         for (const relayUrl of market.relays) {
-          await this._handleNewRelay(relayUrl, market);
+          // do not wait for relays
+          this._handleNewRelay(relayUrl, market);
         }
         if (navigateToConfig === true) {
           this.showMarketConfig(0);
