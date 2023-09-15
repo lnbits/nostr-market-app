@@ -2,11 +2,22 @@
   <div>
     <q-infinite-scroll v-if="showProducts" @load="onLoad" :offset="250">
       <div class="row q-col-gutter-md">
-        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3" v-for="(item, idx) in partialProducts" :key="idx">
-          <product-card :product="item" @change-page="changePageM" @add-to-cart="addToCart"></product-card>
+        <div
+          class="col-xs-12 col-sm-6 col-md-4 col-lg-3"
+          v-for="(item, idx) in partialProducts"
+          :key="idx"
+        >
+          <product-card
+            :product="item"
+            @change-page="changePageM"
+            @add-to-cart="addToCart"
+          ></product-card>
         </div>
       </div>
-      <template v-if="lastProductIndex < filteredProducts.length" v-slot:loading>
+      <template
+        v-if="lastProductIndex < filteredProducts.length"
+        v-slot:loading
+      >
         <div class="row justify-center q-my-md">
           <q-spinner-dots color="primary" size="40px" />
         </div>
@@ -16,13 +27,14 @@
 </template>
 
 <script>
-import { defineComponent } from 'vue'
-import ProductCard from './ProductCard.vue'
+import { defineComponent } from "vue";
+import _ from "lodash";
+import ProductCard from "./ProductCard.vue";
 
 export default defineComponent({
-  name: 'CustomerMarket',
+  name: "CustomerMarket",
   components: { ProductCard },
-  props: ['filtered-products', 'search-text', 'filter-categories'],
+  props: ["filtered-products", "search-text", "filter-categories"],
   data: function () {
     return {
       search: null,
@@ -31,55 +43,70 @@ export default defineComponent({
       startIndex: 0,
       lastProductIndex: 0,
       showProducts: true,
-    }
+      debounceRefreshProducts: null
+    };
   },
   watch: {
     searchText: function () {
-      this.refreshProducts()
+      this.debounceRefreshProducts();
     },
     filteredProducts: function () {
-      this.refreshProducts()
+      this.debounceRefreshProducts();
     },
     filterCategories: function () {
-      this.refreshProducts()
-    }
+      this.debounceRefreshProducts();
+    },
   },
   methods: {
     refreshProducts: function () {
-      this.showProducts = false
-      this.partialProducts = []
+      this.showProducts = false;
+      this.partialProducts = [];
 
-      this.startIndex = 0
-      this.lastProductIndex = Math.min(this.filteredProducts.length, this.productsPerPage)
-      this.partialProducts.push(...this.filteredProducts.slice(0, this.lastProductIndex))
+      this.startIndex = 0;
+      this.lastProductIndex = Math.min(
+        this.filteredProducts.length,
+        this.productsPerPage
+      );
+      this.partialProducts.push(
+        ...this.filteredProducts.slice(0, this.lastProductIndex)
+      );
 
-      setTimeout(() => { this.showProducts = true }, 0)
+      setTimeout(() => {
+        this.showProducts = true;
+      }, 0);
     },
 
     addToCart(item) {
-      this.$emit('add-to-cart', item)
+      this.$emit("add-to-cart", item);
     },
     changePageM(page, opts) {
-      this.$emit('change-page', page, opts)
+      this.$emit("change-page", page, opts);
     },
 
     onLoad(_, done) {
       setTimeout(() => {
         if (this.startIndex >= this.filteredProducts.length) {
-          done()
-          return
+          done();
+          return;
         }
-        this.startIndex = this.lastProductIndex
-        this.lastProductIndex = Math.min(this.filteredProducts.length, this.lastProductIndex + this.productsPerPage)
-        this.partialProducts.push(...this.filteredProducts.slice(this.startIndex, this.lastProductIndex))
-        done()
-      }, 100)
-    }
+        this.startIndex = this.lastProductIndex;
+        this.lastProductIndex = Math.min(
+          this.filteredProducts.length,
+          this.lastProductIndex + this.productsPerPage
+        );
+        this.partialProducts.push(
+          ...this.filteredProducts.slice(this.startIndex, this.lastProductIndex)
+        );
+        done();
+      }, 100);
+    },
   },
   created() {
-    this.lastProductIndex = Math.min(this.filteredProducts.length, 24)
-    this.partialProducts.push(...this.filteredProducts.slice(0, this.lastProductIndex))
-  }
-
-})
+    this.debounceRefreshProducts = _.debounce(this.refreshProducts, 100)
+    this.lastProductIndex = Math.min(this.filteredProducts.length, 24);
+    this.partialProducts.push(
+      ...this.filteredProducts.slice(0, this.lastProductIndex)
+    );
+  },
+});
 </script>
