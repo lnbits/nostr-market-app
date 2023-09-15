@@ -60,6 +60,7 @@ module.exports = configure(function (/* ctx */) {
 
       // rebuildCache: true, // rebuilds Vite/linter/etc cache on startup
 
+      // publicPath: "/nostrmarket/static/market",
       publicPath: "/nostr-market-app/market",
       // analyze: true,
       // env: {},
@@ -85,6 +86,7 @@ module.exports = configure(function (/* ctx */) {
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#framework
     framework: {
+      // config: { staticPath: "/nostrmarket/static/market/" },
       config: { staticPath: "/nostr-market-app/market/" },
 
       // iconSet: 'material-icons', // Quasar icon set
@@ -186,6 +188,7 @@ module.exports = configure(function (/* ctx */) {
       builder: {
         // https://www.electron.build/configuration/configuration
 
+        // appId: "nostrmarket",
         appId: "nostr-market-app",
       },
     },
