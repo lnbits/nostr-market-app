@@ -937,11 +937,13 @@ export default defineComponent({
         };
         this.accountDialog.show = false;
         this.account = this.$q.localStorage.getItem("nostrmarket.account");
+        await this._requeryAllRelays()
       }
       this.accountDialog.show = false;
     },
     logout() {
       window.localStorage.removeItem("nostrmarket.account");
+      // todo: clear all data?
       window.location.href = window.location.origin + window.location.pathname;
       this.account = null;
       this.accountMetadata = null;
@@ -1026,6 +1028,12 @@ export default defineComponent({
         relayData.error = `${error}`;
         console.warn(`Failed to connect to ${relayData.relayUrl}`);
       }
+    },
+
+    async _requeryAllRelays() {
+      Object.keys(this.relaysData).forEach(async (relayKey) => {
+        await this._requeryRelay(relayKey);
+      });
     },
 
     async _requeryRelay(relayKey) {
@@ -1504,7 +1512,7 @@ export default defineComponent({
         await this._processEvents(events, relayData);
 
         relayData.merchants.push(merchantPubkey);
-        this._requeryRelay(relayKey);
+        await this._requeryRelay(relayKey);
       });
     },
 
@@ -1520,7 +1528,7 @@ export default defineComponent({
         relayData.merchants = [
           ...new Set(relayData.merchants.concat(market.opts.merchants)),
         ];
-        this._requeryRelay(relayKey);
+        await this._requeryRelay(relayKey);
       } else {
         await this._loadRelayData(relayUrl, market.opts.merchants);
         await this._connectToRelay(relayKey);
@@ -1540,14 +1548,14 @@ export default defineComponent({
       this._removeSubscriptionsForMerchant(merchantPubkey);
     },
     _removeSubscriptionsForMerchant(merchantPubkey) {
-      Object.keys(this.relaysData).forEach((relayKey) => {
+      Object.keys(this.relaysData).forEach(async (relayKey) => {
         const relayData = this.relaysData[relayKey];
         if (!relayData.merchants.includes(merchantPubkey)) return;
         relayData.merchants = relayData.merchants.filter(
           (m) => m !== merchantPubkey
         );
 
-        this._requeryRelay(relayKey);
+        await this._requeryRelay(relayKey);
       });
     },
     async _handleRemovedRelay(relayUrl) {
