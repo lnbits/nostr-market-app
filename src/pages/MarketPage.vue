@@ -862,6 +862,8 @@ export default defineComponent({
 
     this.isLoading = false;
     this._loadRelaysData();
+
+    this._startRelaysHealtCheck()
   },
   methods: {
     async _handleQueryParams(params) {
@@ -1001,6 +1003,17 @@ export default defineComponent({
 
     /////////////////////////////////////////////////////////// RELAYS ///////////////////////////////////////////////////////////
 
+    _startRelaysHealtCheck() {
+      setInterval(() => {
+        Object.keys(this.relaysData).forEach((k) => {
+          const relayData = this.relaysData[k];
+          if (relayData.relay.status === WebSocket.CLOSED) {
+            this._connectToRelay(k);
+          }
+        });
+      }, 30 * 1000);
+    },
+
     async _toRelayKey(relayUrl) {
       return "relay_" + (await hash(relayUrl));
     },
@@ -1039,10 +1052,12 @@ export default defineComponent({
     async _connectToRelay(relayKey) {
       const relayData = this.relaysData[relayKey];
       try {
+        console.log(`Trying to connect to relay ${relayData.relayUrl}`);
         relayData.relay = NostrTools.relayInit(relayData.relayUrl);
         relayData.relay.on("connect", () => {
           relayData.connected = true;
           relayData.error = null;
+          console.log(`Connected to relay ${relayData.relayUrl}`);
           this._queryRelay(relayKey);
         });
         relayData.relay.on("error", (error) => {
@@ -1318,7 +1333,7 @@ export default defineComponent({
           opts: {
             name: "New Market",
             merchants: merchants || [],
-            ui: {}
+            ui: {},
           },
         };
         this.markets.unshift(market);
@@ -1526,7 +1541,7 @@ export default defineComponent({
         pubkey: event.pubkey,
         kind: 30019,
         identifier: identifier,
-        relays: marketData.relays
+        relays: marketData.relays,
       });
       this.copyText(naddr);
     },
