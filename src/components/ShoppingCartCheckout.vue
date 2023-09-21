@@ -133,6 +133,13 @@
             </div>
             <div class="col-xs-12 col-sm-12 col-md-4"></div>
           </div>
+          <div v-if="shippingZone" class="row q-mt-md">
+            <div class="col">
+              <q-badge color="secondary">
+                Additional per product shipping costs might apply.</q-badge
+              >
+            </div>
+          </div>
         </q-card-section>
 
         <q-separator vertical />
@@ -215,7 +222,8 @@ export default defineComponent({
       if (!this.shippingZone) {
         return "Shipping Zone";
       }
-      let zoneName = this.shippingZone.name || this.shippingZone.id || "Shipping Zone"
+      let zoneName =
+        this.shippingZone.name || this.shippingZone.id || "Shipping Zone";
       zoneName = zoneName.substring(0, 10);
       if (zoneName.length < 10) {
         return zoneName;
