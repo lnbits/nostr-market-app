@@ -142,7 +142,7 @@
               ></q-checkbox>
             </q-tab-panel>
             <q-tab-panel name="merchants">
-              <q-list v-if="!readNotes?.merchants" class="q-mb-lg" bordered>
+              <q-list v-if="!readNotes?.merchants" class="q-mb-lg gt-sm" bordered>
                 <q-item>
                   <q-item-section avatar>
                     <q-avatar>
@@ -284,7 +284,7 @@
       </div>
     </q-card-section>
     <q-separator />
-    <q-card-section>
+    <q-card-section class="q-pb-xl">
       <div class="float-right">
         <q-btn
           @click="deleteMarket"
@@ -313,8 +313,7 @@
       </div>
     </q-card-section>
     <q-card-section class="lt-md"></q-card-section>
-    <q-card-section class="lt-md"></q-card-section>
-    <q-card-section></q-card-section>
+
   </q-card>
 </template>
 
