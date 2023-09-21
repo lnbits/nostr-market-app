@@ -61,7 +61,7 @@ module.exports = configure(function (/* ctx */) {
       // rebuildCache: true, // rebuilds Vite/linter/etc cache on startup
 
       // publicPath: "/nostrmarket/static/market",
-      publicPath: "",
+      publicPath: "/",
       // analyze: true,
       // env: {},
       // rawDefine: {}
