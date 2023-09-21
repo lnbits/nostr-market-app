@@ -631,8 +631,8 @@ export default defineComponent({
         opts: null,
       },
 
-      defaultBanner: this.$q.config.staticPath + "/images/nostr-cover.png",
-      defaultLogo: this.$q.config.staticPath + "/images/nostr-avatar.png",
+      defaultBanner: this.$q.config.staticPath + "images/nostr-cover.png",
+      defaultLogo: this.$q.config.staticPath + "images/nostr-avatar.png",
       defaultMarketNaddr:
         "naddr1qqjr2e34v3jrzd3e95ensdfn956rywps94snwcmr95crvepexc6kxcfcxqmnvqg5waehxw309aex2mrp0yhxgctdw4eju6t0qyv8wumn8ghj7un9d3shjtnndehhyapwwdhkx6tpdsq36amnwvaz7tmwdaehgu3dwp6kytnhv4kxcmmjv3jhytnwv46qzxthwden5te0dehhxarj9eax2cn9v3jk2tnrd3hh2eqprfmhxue69uhhyetvv9ujummjv9hxwetsd9kxctnyv4mqzrthwden5te0dehhxtnvdakqz9rhwden5te0wfjkccte9ehx7um5wghxyecpzpmhxue69uhkummnw3ezuamfdejsz9thwden5te0v4jx2m3wdehhxarj9ekxzmnyqgstle9w09rt8y7xdlqs33v23vqvdtqx6j6j2wa4984g9n77tppx2tqrqsqqqa2ruusd5z",
       readNotes: {
