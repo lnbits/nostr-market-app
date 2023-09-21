@@ -30,8 +30,14 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v3
-            - name: copy main assets
-              run: |
+            - name: Use Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: "16.x"
+            - name: Install dependencies
+              run: npm i
+            - name: Build
+              run: npm run build
             - name: Setup Pages
               uses: actions/configure-pages@v3
             - name: Upload artifact
