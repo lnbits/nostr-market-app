@@ -1,5 +1,5 @@
 <template>
-  <q-page>
+  <q-page  class="q-pa-sm">
     <div class="row q-mb-md">
       <div class="col-lg-1 col-md-1 gt-sm">
         <q-avatar

@@ -1,14 +1,16 @@
 <template>
-  <q-layout view="lHh Lpr lFf">
-    <div class="row q-mb-sm q-mt-md">
-      <div class="col-lg-2 col-md-1 col-sm-0"></div>
-      <div class="col-lg-8 col-md-10 col-sm-12 auto-width q-pl-md q-pr-md">
-        <q-page-container>
-          <router-view />
-        </q-page-container>
-      </div>
-      <div class="col-lg-2 col-md-1 col-sm-0"></div>
-    </div>
+  <q-layout view="hHh lpR fFf">
+    <q-drawer show-if-above side="left">
+      <!-- drawer content -->
+    </q-drawer>
+
+    <q-drawer show-if-above side="right">
+      <!-- drawer content -->
+    </q-drawer>
+
+    <q-page-container>
+      <router-view />
+    </q-page-container>
   </q-layout>
 </template>
 
