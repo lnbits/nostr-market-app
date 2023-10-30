@@ -487,7 +487,7 @@
           label="Nsec/Hex"
           v-model="accountDialog.data.key"
           autofocus
-          @keyup.enter="createAccount"
+          @keyup.enter="() => createAccount(false)"
           :error="accountDialog.data.key && !isValidAccountKey"
           hint="Enter you private key"
         ></q-input>
@@ -498,9 +498,12 @@
           v-if="isValidAccountKey"
           label="Login"
           color="primary"
-          @click="() => createAccount()"
+          @click="() => createAccount(false)"
         ></q-btn>
-        <q-btn v-else flat label="Generate" @click="generateKeyPair"></q-btn>
+        <div v-else>
+          <q-btn flat label="Connect extension" @click="() => createAccount(true)"></q-btn>
+          <q-btn flat label="Generate" @click="generateKeyPair"></q-btn>
+        </div>
         <q-btn v-close-popup flat color="grey" class="q-ml-auto">Close</q-btn>
       </q-card-actions>
     </q-card>
@@ -941,8 +944,32 @@ export default defineComponent({
     openAccountDialog() {
       this.accountDialog.show = true;
     },
-    async createAccount() {
-      if (isValidKey(this.accountDialog.data.key, "nsec")) {
+    async createAccount(useExtension = false) {
+      if (useExtension) {
+        if (typeof window.nostr !== "undefined") {
+          const pubkey = await window.nostr.getPublicKey();
+          this.$q.localStorage.set("nostrmarket.account", {
+            undefined, // privkey,
+            pubkey,
+            nsec: undefined,
+            npub: NostrTools.nip19.npubEncode(pubkey),
+
+            useExtension: true,
+          });
+          this.accountDialog.data = {
+            watchOnly: false,
+            key: null,
+          };
+          this.accountDialog.show = false;
+          this.account = this.$q.localStorage.getItem("nostrmarket.account");
+          await this._requeryAllRelays();
+        } else this.$q.notify({
+            message: "Cannot find extension",
+            caption: `Error`,
+            color: "negative",
+          });
+      }
+      else if (isValidKey(this.accountDialog.data.key, "nsec")) {
         let { key, watchOnly } = this.accountDialog.data;
         if (key.startsWith("n")) {
           let { type, data } = NostrTools.nip19.decode(key);
@@ -1286,7 +1313,9 @@ export default defineComponent({
       }
 
       const peerPubkey = isSentByMe ? receiverPubkey : e.pubkey;
-      e.content = await NostrTools.nip04.decrypt(
+      
+      if (this.account.useExtension) e.content = await window.nostr.nip04.decrypt(peerPubkey, e.content);
+      else e.content = await NostrTools.nip04.decrypt(
         this.account.privkey,
         peerPubkey,
         e.content
@@ -1494,7 +1523,7 @@ export default defineComponent({
       this.transitToPage("market-config");
     },
     async publishNaddr(marketData) {
-      if (!this.account?.privkey) {
+      if (!this.account?.privkey && !this.account.useExtension) {
         this.openAccountDialog();
         this.$q.notify({
           message: "Login Required!",
@@ -1505,7 +1534,7 @@ export default defineComponent({
 
       console.log("### marketData", marketData);
       const identifier = marketData.d ?? crypto.randomUUID();
-      const event = {
+      let event = {
         ...(await NostrTools.getBlankEvent()),
         kind: 30019,
         content: JSON.stringify(marketData.opts),
@@ -1515,7 +1544,8 @@ export default defineComponent({
       };
       event.id = NostrTools.getEventHash(event);
       try {
-        event.sig = await NostrTools.signEvent(event, this.account.privkey);
+        if (this.account.useExtension) event = await window.nostr.signEvent(event);
+        else event.sig = await NostrTools.getSignature(event, this.account.privkey);
 
         const relayCount = await this._publishEventToRelays(
           event,
@@ -1692,21 +1722,23 @@ export default defineComponent({
         return;
       }
       try {
-        const event = {
+        let event = {
           ...(await NostrTools.getBlankEvent()),
           kind: 4,
           created_at: Math.floor(Date.now() / 1000),
           tags: [["p", dm.to]],
           pubkey: this.account.pubkey,
         };
-        event.content = await NostrTools.nip04.encrypt(
+        if (this.account.useExtension) event.content = await window.nostr.nip04.encrypt(dm.to, dm.message);
+        else event.content = await NostrTools.nip04.encrypt(
           this.account.privkey,
           dm.to,
           dm.message
         );
 
         event.id = NostrTools.getEventHash(event);
-        event.sig = await NostrTools.signEvent(event, this.account.privkey);
+        if (this.account.useExtension) event = await window.nostr.signEvent(event);
+        else event.sig = await NostrTools.getSignature(event, this.account.privkey);
 
         await this._sendDmEvent(event);
         event.content = dm.message;
@@ -1740,20 +1772,23 @@ export default defineComponent({
     /////////////////////////////////////////////////////////// ORDERS ///////////////////////////////////////////////////////////
 
     async placeOrder({ event, order, cartId }) {
-      if (!this.account?.privkey) {
+      if (!this.account?.privkey && !this.account.useExtension) {
         this.openAccountDialog();
         return;
       }
       try {
         this.activeOrderId = order.id;
-        event.content = await NostrTools.nip04.encrypt(
+        if (this.account.useExtension) event.content = await window.nostr.nip04.encrypt(this.checkoutStall.pubkey,
+          JSON.stringify(order));
+        else event.content = await NostrTools.nip04.encrypt(
           this.account.privkey,
           this.checkoutStall.pubkey,
           JSON.stringify(order)
         );
 
         event.id = NostrTools.getEventHash(event);
-        event.sig = await NostrTools.signEvent(event, this.account.privkey);
+        if (this.account.useExtension) event = await window.nostr.signEvent(event);
+        else event.sig = await NostrTools.getSignature(event, this.account.privkey);
 
         await this._sendOrderEvent(event);
         this._persistOrderUpdate(

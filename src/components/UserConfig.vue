@@ -36,7 +36,7 @@
         </div>
       </div>
 
-      <div class="row">
+      <div class="row" v-if="!accountData.useExtension">
         <div class="col-10">
           <q-input
             v-model="accountData.nsec"
@@ -68,6 +68,9 @@
             color="gray float-right q-mt-sm"
           ></q-btn>
         </div>
+      </div>
+      <div class="row" v-else>
+        Extension is connected and will be used to sign events and encrypt/decrypt DMs.
       </div>
     </q-card-section>
     <q-card-section v-else>
