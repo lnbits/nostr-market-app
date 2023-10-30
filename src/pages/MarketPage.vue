@@ -1790,8 +1790,6 @@ export default defineComponent({
         if (this.account.useExtension) event = await window.nostr.signEvent(event);
         else event.sig = await NostrTools.getSignature(event, this.account.privkey);
 
-        console.log('Signed event before sending', event);
-
         await this._sendOrderEvent(event);
         this._persistOrderUpdate(
           this.checkoutStall.pubkey,
