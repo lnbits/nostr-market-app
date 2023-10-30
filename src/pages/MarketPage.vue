@@ -1523,7 +1523,7 @@ export default defineComponent({
       this.transitToPage("market-config");
     },
     async publishNaddr(marketData) {
-      if (!this.account?.privkey) {
+      if (!this.account?.privkey && !this.account.useExtension) {
         this.openAccountDialog();
         this.$q.notify({
           message: "Login Required!",
