@@ -142,7 +142,11 @@
               ></q-checkbox>
             </q-tab-panel>
             <q-tab-panel name="merchants">
-              <q-list v-if="!readNotes?.merchants" class="q-mb-lg gt-sm" bordered>
+              <q-list
+                v-if="!readNotes?.merchants"
+                class="q-mb-lg gt-sm"
+                bordered
+              >
                 <q-item>
                   <q-item-section avatar>
                     <q-avatar>
@@ -313,7 +317,6 @@
       </div>
     </q-card-section>
     <q-card-section class="lt-md"></q-card-section>
-
   </q-card>
 </template>
 

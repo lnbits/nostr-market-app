@@ -1,5 +1,5 @@
 <template>
-  <q-page  class="q-pa-sm">
+  <q-page class="q-pa-sm">
     <div class="row q-mb-md">
       <div class="col-lg-1 col-md-1 gt-sm">
         <q-avatar
@@ -265,22 +265,30 @@
         </q-breadcrumbs>
       </div>
       <div class="col-md-2 col-sm-5">
-        <q-btn
-          v-if="activePage === 'customer-stall'"
-          flat
-          color="grey"
-          icon="content_copy"
-          @click="copyUrl()"
-          class="float-right"
-        ></q-btn>
-        <q-checkbox
-          v-model="groupByStall"
-          v-else-if="activePage === 'market' && stalls?.length"
-          class="q-pl-md q-mt-sm float-right"
-          size="xs"
-          val="xs"
-          label="Group by stalls"
-        ></q-checkbox>
+        <div class="float-right">
+          <q-checkbox
+            v-model="groupByStall"
+            v-if="activePage === 'market' && stalls?.length"
+            class="q-pl-md q-mt-sm float-right"
+            size="xs"
+            val="xs"
+            label="Group by stalls"
+          ></q-checkbox>
+          <q-btn
+            v-if="activePage === 'customer-stall'"
+            flat
+            color="grey"
+            icon="content_copy"
+            @click="copyUrl()"
+          ></q-btn>
+          <q-btn
+            v-if="activePage === 'customer-stall'"
+            flat
+            color="grey"
+            icon="sort"
+            @click="copyUrl()"
+          ></q-btn>
+        </div>
       </div>
     </div>
 
@@ -863,7 +871,7 @@ export default defineComponent({
     this.isLoading = false;
     this._loadRelaysData();
 
-    this._startRelaysHealtCheck()
+    this._startRelaysHealtCheck();
   },
   methods: {
     async _handleQueryParams(params) {
@@ -1091,8 +1099,7 @@ export default defineComponent({
       const authors = relayData.merchants;
       const filters = [
         {
-          kinds: [0, 5, 30017, 30018],
-          authors,
+          kinds: [30017, 30018],
           since: relayData.lastEventAt + 1,
         },
       ];
@@ -1552,9 +1559,7 @@ export default defineComponent({
         if (!market.relays.includes(relayData.relayUrl)) return;
         if (relayData.merchants.includes(merchantPubkey)) return;
 
-        const events = await relayData.relay.list([
-          { kinds: [0, 30017, 30018], authors: [merchantPubkey] },
-        ]);
+        const events = await relayData.relay.list([{ kinds: [30017, 30018] }]);
         await this._processEvents(events, relayData);
 
         relayData.merchants.push(merchantPubkey);
@@ -1566,9 +1571,7 @@ export default defineComponent({
       const relayKey = await this._toRelayKey(relayUrl);
       if (this.relaysData[relayKey]) {
         const relayData = this.relaysData[relayKey];
-        const events = await relayData.relay.list([
-          { kinds: [0, 30017, 30018], authors: market.opts.merchants },
-        ]);
+        const events = await relayData.relay.list([{ kinds: [30017, 30018] }]);
 
         await this._processEvents(events, relayData);
         relayData.merchants = [

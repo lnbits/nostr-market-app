@@ -43,7 +43,7 @@ export default defineComponent({
       startIndex: 0,
       lastProductIndex: 0,
       showProducts: true,
-      debounceRefreshProducts: null
+      debounceRefreshProducts: null,
     };
   },
   watch: {
@@ -102,7 +102,7 @@ export default defineComponent({
     },
   },
   created() {
-    this.debounceRefreshProducts = _.debounce(this.refreshProducts, 100)
+    this.debounceRefreshProducts = _.debounce(this.refreshProducts, 100);
     this.lastProductIndex = Math.min(this.filteredProducts.length, 24);
     this.partialProducts.push(
       ...this.filteredProducts.slice(0, this.lastProductIndex)
