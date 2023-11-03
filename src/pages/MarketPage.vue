@@ -949,10 +949,9 @@ export default defineComponent({
             icon: "warning",
           });
         } else if (this.allMerchants.includes(merchantPubkey)) {
-          this.$q.notify({
-            message: "Request (URL) merchant already exists!",
-            type: "positive",
-          });
+          console.log(
+            `Request (URL) merchant (${merchantPubkey}) already exists!`
+          );
         } else {
           this.$q
             .dialog(
@@ -1154,6 +1153,7 @@ export default defineComponent({
       const filters = [
         {
           kinds: [30017, 30018],
+          authors,
           since: relayData.lastEventAt + 1,
         },
       ];
@@ -1613,7 +1613,9 @@ export default defineComponent({
         if (!market.relays.includes(relayData.relayUrl)) return;
         if (relayData.merchants.includes(merchantPubkey)) return;
 
-        const events = await relayData.relay.list([{ kinds: [30017, 30018] }]);
+        const events = await relayData.relay.list([
+          { kinds: [30017, 30018], authors: [merchantPubkey] },
+        ]);
         await this._processEvents(events, relayData);
 
         relayData.merchants.push(merchantPubkey);
@@ -1625,7 +1627,9 @@ export default defineComponent({
       const relayKey = await this._toRelayKey(relayUrl);
       if (this.relaysData[relayKey]) {
         const relayData = this.relaysData[relayKey];
-        const events = await relayData.relay.list([{ kinds: [30017, 30018] }]);
+        const events = await relayData.relay.list([
+          { kinds: [30017, 30018], authors: market.opts.merchants },
+        ]);
 
         await this._processEvents(events, relayData);
         relayData.merchants = [
