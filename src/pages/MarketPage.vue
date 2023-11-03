@@ -298,7 +298,9 @@
                         : ''
                     "
                     flat
-                    icon="north"
+                    class="rotate-180"
+                    icon="filter_list"
+                    v-close-popup
                   ></q-btn>
                 </q-item-section>
                 <q-item-section>
@@ -316,7 +318,8 @@
                         : ''
                     "
                     flat
-                    icon="south"
+                    icon="filter_list"
+                    v-close-popup
                   ></q-btn>
                 </q-item-section>
               </q-item> </q-list
@@ -1935,6 +1938,10 @@ export default defineComponent({
         ui: { darkMode: false },
       };
 
+      const sort = this.$q.localStorage.getItem("nostrmarket.sort") || {};
+      this.sort.by = sort.by || this.sort.by;
+      this.sort.order = sort.order || this.sort.order;
+
       // trigger the `watch` logic
       this.config = {
         ...this.config,
@@ -2167,6 +2174,7 @@ export default defineComponent({
     sortProducts(by, order = "asc") {
       this.sort.by = by;
       this.sort.order = order;
+      this.$q.localStorage.set("nostrmarket.sort", { by, order });
     },
   },
 });
