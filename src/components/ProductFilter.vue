@@ -211,7 +211,6 @@ export default defineComponent({
     },
   },
   created: async function () {
-    console.log("### this.filter", this.filter);
     this.filterData = {
       ...this.filterData,
       ...JSON.parse(JSON.stringify(this.filter || {})),
