@@ -949,10 +949,9 @@ export default defineComponent({
             icon: "warning",
           });
         } else if (this.allMerchants.includes(merchantPubkey)) {
-          this.$q.notify({
-            message: "Request (URL) merchant already exists!",
-            type: "positive",
-          });
+          console.log(
+            `Request (URL) merchant (${merchantPubkey}) already exists!`
+          );
         } else {
           this.$q
             .dialog(
