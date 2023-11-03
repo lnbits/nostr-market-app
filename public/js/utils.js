@@ -156,8 +156,31 @@ function isValidKeyHex(key) {
 }
 
 function formatCurrency(value, currency) {
-  return new Intl.NumberFormat(window.LOCALE, {
-    style: "currency",
-    currency: currency,
-  }).format(value);
+  try {
+    return new Intl.NumberFormat(window.LOCALE, {
+      style: "currency",
+      currency: currency,
+    }).format(value);
+  } catch (error) {
+    return value;
+  }
+}
+
+function productCompare(a, b, sortBy, sortOrder) {
+  let va = a[sortBy];
+  let vb = b[sortBy];
+  if (sortOrder !== "asc") {
+    [vb, va] = [va, vb];
+  }
+  if (!va && !vb) return 0;
+  if (!va) return -1;
+  if (!vb) return 1;
+
+  if (Array.isArray(va)) {
+    return va.join().localeCompare(vb.join());
+  }
+  if (typeof va === "string") {
+    return va.localeCompare(vb);
+  }
+  return va - vb;
 }

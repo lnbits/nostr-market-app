@@ -152,7 +152,7 @@
     </q-banner>
 
     <div class="row q-mb-sm">
-      <div class="col-md-10 col-sm-7 auto-width">
+      <div class="col-md-8 col-sm-7 auto-width">
         <q-breadcrumbs class="cursor q-mt-sm q-mr-sm">
           <q-breadcrumbs-el>
             <q-btn
@@ -264,12 +264,12 @@
           ></q-breadcrumbs-el>
         </q-breadcrumbs>
       </div>
-      <div class="col-md-2 col-sm-5">
+      <div class="col-md-4 col-sm-5">
         <div class="float-right">
           <q-checkbox
             v-model="groupByStall"
             v-if="activePage === 'market' && stalls?.length"
-            class="q-pl-md q-mt-sm float-right"
+            class="q-pl-md q-mt-sm"
             size="xs"
             val="xs"
             label="Group by stalls"
@@ -281,13 +281,46 @@
             icon="content_copy"
             @click="copyUrl()"
           ></q-btn>
-          <q-btn
-            v-if="activePage === 'customer-stall'"
-            flat
-            color="grey"
-            icon="sort"
-            @click="copyUrl()"
-          ></q-btn>
+          <q-btn-dropdown flat color="grey" icon="sort">
+            <q-list>
+              <q-item
+                v-for="sortOption in sort.options"
+                :key="sortOption.field"
+                :active="sort.by === sortOption.field"
+                v-ripple
+              >
+                <q-item-section side top>
+                  <q-btn
+                    @click="sortProducts(sortOption.field, 'asc')"
+                    :color="
+                      sort.by === sortOption.field && sort.order === 'asc'
+                        ? 'primary'
+                        : ''
+                    "
+                    flat
+                    icon="north"
+                  ></q-btn>
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>
+                    <strong><span v-text="sortOption.label"></span></strong
+                  ></q-item-label>
+                </q-item-section>
+
+                <q-item-section side top>
+                  <q-btn
+                    @click="sortProducts(sortOption.field, 'desc')"
+                    :color="
+                      sort.by === sortOption.field && sort.order === 'desc'
+                        ? 'primary'
+                        : ''
+                    "
+                    flat
+                    icon="south"
+                  ></q-btn>
+                </q-item-section>
+              </q-item> </q-list
+          ></q-btn-dropdown>
         </div>
       </div>
     </div>
@@ -628,6 +661,19 @@ export default defineComponent({
         priceFrom: null,
         priceTo: null,
       },
+      sort: {
+        options: [
+          { field: "categories", label: "Categories" },
+          { field: "name", label: "Name" },
+          { field: "description", label: "Description" },
+          { field: "stallName", label: "Stall" },
+          { field: "price", label: "Price" },
+          { field: "currency", label: "Currency" },
+          { field: "createdAt", label: "Changed" },
+        ],
+        by: "name",
+        order: "asc",
+      },
       dmEvents: null,
 
       activeMarket: null,
@@ -733,6 +779,11 @@ export default defineComponent({
           hasPriceFrom(p.price) &&
           hasPriceTo(p.price)
       );
+
+      products.sort((a, b) =>
+        productCompare(a, b, this.sort.by, this.sort.order)
+      );
+
       if (!this.searchText || this.searchText.length < 2) return products;
       const searchText = this.searchText.toLowerCase();
       return products.filter(
@@ -2112,6 +2163,10 @@ export default defineComponent({
     focusOnElement(elementId) {
       document.getElementById(elementId)?.scrollIntoView();
       this.showFilterDetails = true;
+    },
+    sortProducts(by, order = "asc") {
+      this.sort.by = by;
+      this.sort.order = order;
     },
   },
 });
