@@ -574,11 +574,35 @@
         <q-btn
           v-if="qrCodeDialog.data.payment_request"
           outline
-          color="grey"
+          color="primary"
           @click="copyText(qrCodeDialog.data.payment_request)"
           >Copy invoice</q-btn
         >
         <q-btn flat v-close-popup color="grey" class="q-ml-auto">Close</q-btn>
+      </div>
+    </q-card>
+  </q-dialog>
+  <!-- NADDR Dialog -->
+  <q-dialog v-model="naddrDialog.show" position="top">
+    <q-card class="q-pa-lg q-pt-xl" style="width: 500px">
+      <q-input
+        filled
+        dense
+        type="textarea"
+        rows="30"
+        readonly
+        v-model.trim="naddrDialog.publishedNaddr"
+        label="Market Naddr"
+      ></q-input>
+      <div class="row q-mt-lg">
+        <q-btn
+          outline
+          color="primary"
+          icon="content_copy"
+          @click="copyText(naddrDialog.publishedNaddr)"
+          >Copy Naddr</q-btn
+        >
+        <q-btn v-close-popup flat color="grey" class="q-ml-auto">Close</q-btn>
       </div>
     </q-card>
   </q-dialog>
@@ -639,6 +663,10 @@ export default defineComponent({
         },
         dismissMsg: null,
         show: false,
+      },
+      naddrDialog: {
+        show: false,
+        publishedNaddr: "",
       },
 
       groupByStall: false,
@@ -1604,7 +1632,8 @@ export default defineComponent({
         identifier: identifier,
         relays: marketData.relays,
       });
-      this.copyText(naddr);
+      this.naddrDialog.publishedNaddr = naddr;
+      this.naddrDialog.show = true;
     },
 
     _handleNewMerchant(market, merchantPubkey) {
