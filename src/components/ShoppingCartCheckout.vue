@@ -212,7 +212,7 @@ export default defineComponent({
   computed: {
     cartTotal() {
       if (!this.cart.products?.length) return 0;
-      return this.cart.products.reduce((t, p) => p.price + t, 0);
+      return this.cart.products.reduce((t, p) => p.price * p.orderedQuantity + t, 0);
     },
     cartTotalWithShipping() {
       if (!this.shippingZone) return this.cartTotal;
