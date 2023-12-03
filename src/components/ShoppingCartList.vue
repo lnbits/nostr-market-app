@@ -128,7 +128,7 @@ export default defineComponent({
     },
     cartTotalFormatted(cart) {
       if (!cart.products?.length) return "";
-      const total = cart.products.reduce((t, p) => p.price + t, 0);
+      const total = cart.products.reduce((t, p) => p.price * p.orderedQuantity + t, 0);
       return formatCurrency(total, cart.products[0].currency);
     },
     removeProduct: function (stallId, productId) {
