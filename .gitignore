@@ -7,6 +7,9 @@ node_modules
 /dist
 /quasar.config.*.temporary.compiled*
 
+# Ignore build folder
+market/
+
 # Cordova related directories and files
 /src-cordova/node_modules
 /src-cordova/platforms
