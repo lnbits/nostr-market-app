@@ -945,6 +945,7 @@ export default defineComponent({
 
     this._restoreFromStorage();
 
+    this.pool = new NostrTools.SimplePool();
     const params = new URLSearchParams(window.location.search);
 
     await this.addMarket(params.get("naddr"));
@@ -1456,8 +1457,7 @@ export default defineComponent({
           selected: true,
         };
 
-        const pool = new NostrTools.SimplePool();
-        const event = await pool.get(market.relays, {
+        const event = await this.pool.get(market.relays, {
           kinds: [30019],
           limit: 1,
           authors: [market.pubkey],
