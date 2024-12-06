@@ -1968,7 +1968,7 @@ export default defineComponent({
       const uiConfig = this.$q.localStorage.getItem(
         "nostrmarket.marketplaceConfig"
       ) || {
-        ui: { darkMode: false },
+        ui: { darkMode: true },
       };
 
       const sort = this.$q.localStorage.getItem("nostrmarket.sort") || {};
