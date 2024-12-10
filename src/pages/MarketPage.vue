@@ -442,7 +442,7 @@
                 <li>
                   <span class="text-h6">
                     <q-btn
-                      @click="addMarket(defaultMarketNaddr)"
+                      @click="addUpdateMarket(defaultMarketNaddr)"
                       size="xl"
                       flat
                       color="secondary"
@@ -763,7 +763,7 @@ export default defineComponent({
             .dialog(confirm("Do you want to import this market profile?"))
             .onOk(async () => {
               this.searchText = "";
-              await this.addMarket(n);
+              await this.addUpdateMarket(n);
             });
         } catch {}
       }
@@ -947,7 +947,8 @@ export default defineComponent({
 
     const params = new URLSearchParams(window.location.search);
 
-    await this.addMarket(params.get("naddr"));
+    this.markets.forEach(market => this.addUpdateMarket(market.naddr, false));
+    await this.addUpdateMarket(params.get("naddr"));
     await this._handleQueryParams(params);
 
     this.isLoading = false;
@@ -1441,7 +1442,7 @@ export default defineComponent({
         this.setActivePage("market-config");
       }
     },
-    async addMarket(naddr) {
+    async addUpdateMarket(naddr, modUI = true) {
       if (!naddr) return;
 
       try {
@@ -1451,6 +1452,7 @@ export default defineComponent({
 
         const market = {
           d: data.identifier,
+          naddr: naddr,
           pubkey: data.pubkey,
           relays: data.relays,
           selected: true,
@@ -1468,6 +1470,9 @@ export default defineComponent({
 
         if (isJson(event.content)) {
           market.opts = JSON.parse(event.content);
+        }
+
+        if (modUI) {
           this.$q
             .dialog(
               confirm(
