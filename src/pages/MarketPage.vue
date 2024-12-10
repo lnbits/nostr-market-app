@@ -798,6 +798,8 @@ export default defineComponent({
         !this.filterData.priceTo || price <= this.filterData.priceTo;
       const isInActiceStall = (stallId) =>
         !this.activeStall || stallId == this.activeStall;
+      const isActive = (active) =>
+        active;
 
       let products = this.products.filter(
         (p) =>
@@ -808,7 +810,8 @@ export default defineComponent({
           isInStall(p.stall_id) &&
           hasCurrency(p.currency) &&
           hasPriceFrom(p.price) &&
-          hasPriceTo(p.price)
+          hasPriceTo(p.price) &&
+          isActive(p.active)
       );
 
       products.sort((a, b) =>
