@@ -1,3 +1,5 @@
+// TODO: need to link processEvents
+
 import { useMarketStore } from "../stores/marketStore.js";
 
 export function useRelay() {
@@ -110,18 +112,18 @@ export function useRelay() {
         since: relayData.lastEventAt + 1,
       },
     ];
-    if (account?.pubkey) {
+    if (marketStore.account?.pubkey) {
       const since = noDmEvents() ? 0 : relayData.lastEventAt + 1;
 
       filters.push(
         {
           kinds: [4],
-          "#p": [account.pubkey],
+          "#p": [marketStore.account.pubkey],
           since,
         },
         {
           kinds: [4],
-          authors: [account.pubkey],
+          authors: [marketStore.account.pubkey],
           since,
         }
       );
@@ -138,6 +140,7 @@ export function useRelay() {
     console.log("### queryRelay.events", relayData.relayUrl, events);
 
     if (events?.length) {
+      // TODO:
       await processEvents(events, relayData);
     }
 
@@ -145,6 +148,7 @@ export function useRelay() {
     relayData.sub.on(
       "event",
       (event) => {
+      // TODO:
         processEvents([event], relayData);
       },
       { id: "masterSub" } //pass ID to cancel previous sub
