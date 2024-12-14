@@ -933,7 +933,6 @@ export default defineComponent({
 
     const params = new URLSearchParams(window.location.search);
 
-    await this.addMarket(params.get("naddr"));
     await this._handleQueryParams(params);
 
     this.isLoading = false;
@@ -993,305 +992,6 @@ export default defineComponent({
       console.log("### handleFilterData", filterData);
       this.filterData = filterData;
       this.setActivePage("market");
-    },
-
-    /////////////////////////////////////////////////////////// MARKET ///////////////////////////////////////////////////////////
-
-    async createMarket(navigateToConfig, merchants) {
-      try {
-        this.setActivePage("loading");
-        const market = {
-          d: crypto.randomUUID(),
-          pubkey: this.account?.pubkey || "",
-          relays: [...defaultRelays],
-          selected: true,
-          opts: {
-            name: "New Market",
-            merchants: merchants || [],
-            ui: {},
-          },
-        };
-        this.markets.unshift(market);
-        this.$q.localStorage.set("nostrmarket.markets", this.markets);
-
-        for (const relayUrl of market.relays) {
-          // do not wait for relays
-          this._handleNewRelay(relayUrl, market);
-        }
-        if (navigateToConfig === true) {
-          this.showMarketConfig(0);
-        }
-      } catch (error) {
-        console.warn(error);
-      } finally {
-        this.setActivePage("market-config");
-      }
-    },
-    async addMarket(naddr) {
-      if (!naddr) return;
-
-      try {
-        this.setActivePage("loading");
-        const { type, data } = NostrTools.nip19.decode(naddr);
-        if (type !== "naddr" || data.kind !== 30019) return; // just double check
-
-        const market = {
-          d: data.identifier,
-          pubkey: data.pubkey,
-          relays: data.relays,
-          selected: true,
-        };
-
-        const pool = new NostrTools.SimplePool();
-        const event = await pool.get(market.relays, {
-          kinds: [30019],
-          limit: 1,
-          authors: [market.pubkey],
-          "#d": [market.d],
-        });
-
-        if (!event) return;
-
-        if (isJson(event.content)) {
-          market.opts = JSON.parse(event.content);
-          this.$q
-            .dialog(
-              confirm(
-                `Do you want to use the look and feel of the '${market.opts.name}' market?`
-              )
-            )
-            .onOk(async () => {
-              this.config = { ...this.config, opts: market.opts };
-              this._applyUiConfigs(market?.opts);
-            });
-        }
-
-        this.markets = this.markets.filter(
-          (m) => m.d !== market.d || m.pubkey !== market.pubkey
-        );
-        this.markets.unshift(market);
-        this.$q.localStorage.set("nostrmarket.markets", this.markets);
-
-        for (const relayUrl of market.relays) {
-          await this._handleNewRelay(relayUrl, market);
-        }
-      } catch (error) {
-        console.warn(error);
-      } finally {
-        this.setActivePage("market");
-      }
-    },
-    updateMarket(market) {
-      try {
-        this.isLoading = true;
-
-        const { d, pubkey } = market;
-
-        const existingMarket =
-          this.markets.find((m) => m.d === d && m.pubkey === pubkey) || {};
-
-        const newMerchants = market.opts?.merchants.filter(
-          (m) => !existingMarket.opts?.merchants.includes(m)
-        );
-        const removedMerchants = existingMarket.opts?.merchants.filter(
-          (m) => !market.opts?.merchants.includes(m)
-        );
-        const newRelays = market.relays.filter(
-          (r) => !existingMarket.relays.includes(r)
-        );
-        const removedRelays = existingMarket.relays.filter(
-          (r) => !market.relays.includes(r)
-        );
-
-        this.markets = this.markets.filter(
-          (m) => m.d !== d || m.pubkey !== pubkey
-        );
-        this.markets.unshift(market);
-        this.$q.localStorage.set("nostrmarket.markets", this.markets);
-
-        removedMerchants?.forEach(this._handleRemoveMerchant);
-        newMerchants?.forEach((m) => this._handleNewMerchant(market, m));
-
-        console.log("### newRelays", newRelays);
-        console.log("### removedRelays", removedRelays);
-
-        newRelays?.forEach((r) => this._handleNewRelay(r, market));
-        removedRelays?.forEach(this._handleRemovedRelay);
-
-        // stalls and products can be removed when a market is updated
-        this.persistStallsAndProducts();
-        this.persistRelaysData();
-      } catch (error) {
-        console.warn(error);
-      } finally {
-        this.isLoading = false;
-      }
-    },
-    deleteMarket(market) {
-      try {
-        this.isLoading = true;
-
-        const { d, pubkey } = market;
-        this.markets = this.markets.filter(
-          (m) => m.d !== d || m.pubkey !== pubkey
-        );
-        this.$q.localStorage.set("nostrmarket.markets", this.markets);
-        if (
-          this.activeMarket &&
-          this.activeMarket.d === d &&
-          this.activeMarket.pubkey === pubkey
-        ) {
-          this.activeMarket = null;
-          this.navigateTo("market");
-          this.updateUiConfig(this.markets[0]);
-        }
-        market.opts.merchants?.forEach(this._handleRemoveMerchant);
-        market.relays?.forEach(this._handleRemovedRelay);
-
-        this.persistStallsAndProducts();
-        this.persistRelaysData();
-      } catch (error) {
-        console.warn(error);
-      } finally {
-        this.isLoading = false;
-      }
-    },
-    toggleMarket() {
-      this.allMarketsSelected = !this.markets.find((m) => !m.selected);
-      this.$q.localStorage.set("nostrmarket.markets", this.markets);
-    },
-    toggleAllMarkets() {
-      this.markets.forEach((m) => (m.selected = this.allMarketsSelected));
-      this.$q.localStorage.set("nostrmarket.markets", this.markets);
-    },
-    showMarketConfig(index) {
-      this.activeMarket = this.markets[index];
-      this.transitToPage("market-config");
-    },
-    async publishNaddr(marketData) {
-      if (!this.account?.privkey) {
-        this.openAccountDialog();
-        this.$q.notify({
-          message: "Login Required!",
-          icon: "warning",
-        });
-        return;
-      }
-
-      console.log("### marketData", marketData);
-      const identifier = marketData.d ?? crypto.randomUUID();
-      const event = {
-        ...(await NostrTools.getBlankEvent()),
-        kind: 30019,
-        content: JSON.stringify(marketData.opts),
-        created_at: Math.floor(Date.now() / 1000),
-        tags: [["d", identifier]],
-        pubkey: this.account.pubkey,
-      };
-      event.id = NostrTools.getEventHash(event);
-      try {
-        event.sig = await NostrTools.signEvent(event, this.account.privkey);
-
-        const relayCount = await this.publishEventToRelays(
-          event,
-          marketData.relays
-        );
-
-        this.$q.notify({
-          type: relayCount ? "positive" : "warning",
-          message: relayCount
-            ? `The market profile has been published tp (${relayCount} relays)!`
-            : "The market profile could not be published",
-        });
-      } catch (err) {
-        console.error(err);
-        this.$q.notify({
-          message: "Cannot publish market profile",
-          caption: `Error: ${err}`,
-          color: "negative",
-        });
-        return;
-      }
-      const naddr = NostrTools.nip19.naddrEncode({
-        pubkey: event.pubkey,
-        kind: 30019,
-        identifier: identifier,
-        relays: marketData.relays,
-      });
-      this.naddrDialog.publishedNaddr = naddr;
-      this.naddrDialog.show = true;
-    },
-
-    _handleNewMerchant(market, merchantPubkey) {
-      Object.keys(this.relaysData).forEach(async (relayKey) => {
-        const relayData = this.relaysData[relayKey];
-        if (!market.relays.includes(relayData.relayUrl)) return;
-        if (relayData.merchants.includes(merchantPubkey)) return;
-
-        const events = await relayData.relay.list([
-          { kinds: [30017, 30018], authors: [merchantPubkey] },
-        ]);
-        await this._processEvents(events, relayData);
-
-        relayData.merchants.push(merchantPubkey);
-        await this.requeryRelay(relayKey);
-      });
-    },
-
-    async _handleNewRelay(relayUrl, market) {
-      const relayKey = await this.toRelayKey(relayUrl);
-      if (this.relaysData[relayKey]) {
-        const relayData = this.relaysData[relayKey];
-        const events = await relayData.relay.list([
-          { kinds: [30017, 30018], authors: market.opts.merchants },
-        ]);
-
-        await this._processEvents(events, relayData);
-        relayData.merchants = [
-          ...new Set(relayData.merchants.concat(market.opts.merchants)),
-        ];
-        await this.requeryRelay(relayKey);
-      } else {
-        await this.loadRelayData(relayUrl, market.opts.merchants);
-        await this.connectToRelay(relayKey);
-      }
-    },
-    _handleRemoveMerchant(merchantPubkey) {
-      const marketWithMerchant = this.markets.find((m) =>
-        m.opts.merchants.find((mr) => mr === merchantPubkey)
-      );
-      // other markets still have this merchant
-      if (marketWithMerchant) return;
-
-      // remove all products and stalls from that merchant
-      this.products = this.products.filter((p) => p.pubkey !== merchantPubkey);
-      this.stalls = this.stalls.filter((s) => s.pubkey !== merchantPubkey);
-
-      this._removeSubscriptionsForMerchant(merchantPubkey);
-    },
-    _removeSubscriptionsForMerchant(merchantPubkey) {
-      Object.keys(this.relaysData).forEach(async (relayKey) => {
-        const relayData = this.relaysData[relayKey];
-        if (!relayData.merchants.includes(merchantPubkey)) return;
-        relayData.merchants = relayData.merchants.filter(
-          (m) => m !== merchantPubkey
-        );
-
-        await this.requeryRelay(relayKey);
-      });
-    },
-    async _handleRemovedRelay(relayUrl) {
-      // todo: later
-      // leave products and stalls alone
-      const marketWitRelay = this.markets.find((m) =>
-        m.relays.find((r) => r === relayUrl)
-      );
-      if (!marketWitRelay) {
-        // relay no longer exists
-        const relayKey = await this.toRelayKey(relayUrl);
-        delete this.relaysData[relayKey];
-        this.persistRelaysData();
-      }
     },
 
     /////////////////////////////////////////////////////////// DIRRECT MESSAGES ///////////////////////////////////////////////////////////
@@ -1495,11 +1195,28 @@ import { useRelay } from "../composables/useRelay.js";
 import { useShoppingCart } from "../composables/useShoppingCart.js";
 import { useOrders } from "../composables/useOrders.js";
 import { useEvents } from "../composables/useEvents.js";
+import { useMarket } from "../composables/useMarket.js";
 
 const $q = useQuasar();
 window.$q = $q; // if necessary
 
 const { store } = useMarketStore();
+
+const {
+  createMarket,
+  addMarket,
+  updateMarket,
+  deleteMarket,
+  toggleMarket,
+  toggleAllMarkets,
+  showMarketConfig,
+  publishNaddr,
+  _handleNewMerchant,
+  _handleNewRelay,
+  _handleRemoveMerchant,
+  _removeSubscriptionsForMerchant,
+  _handleRemovedRelay,
+} = useMarket();
 
 const {
   generateKeyPair,
@@ -1538,14 +1255,15 @@ const {
   persistDMEvent,
 } = useStorage();
 
-const {
-  processEvents,
-} = useEvents();
-
-restoreFromStorage();
+const { processEvents } = useEvents();
 
 const init = async () => {
   try {
+    restoreFromStorage();
+
+    const params = new URLSearchParams(window.location.search);
+    await addMarket(params.get("naddr"));
+
     await loadRelaysData();
     startRelaysHealtCheck();
   } catch (error) {
