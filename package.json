@@ -12,6 +12,7 @@
     "dev": "quasar dev",
     "build": "quasar build"
   },
+  "type": "module",
   "dependencies": {
     "@chenfengyuan/vue-qrcode": "2",
     "@quasar/extras": "^1.16.4",
@@ -26,8 +27,8 @@
     "vue-router": "^4.0.0"
   },
   "devDependencies": {
-    "@quasar/app-vite": "^1.3.0",
-    "@vue/devtools": "^7.6.8",
+    "@quasar/app-vite": "^2.0.2",
+    "@vue/devtools": "^6.6.4",
     "autoprefixer": "^10.4.2",
     "eslint": "^8.10.0",
     "eslint-config-prettier": "^8.1.0",
