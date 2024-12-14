@@ -1,9 +1,11 @@
 import { useMarketStore } from "../stores/marketStore.js";
 import { useEvents } from "./useEvents";
+import { useQuasar } from "quasar"
 
 export function useRelay() {
   const marketStore = useMarketStore();
   const eventService = useEvents()
+  const $q = useQuasar()
 
   const startRelaysHealtCheck = () => {
     setInterval(() => {
