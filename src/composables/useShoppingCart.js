@@ -65,8 +65,8 @@ export function useShoppingCart() {
 
   const checkoutStallCart = (cart) => {
     marketStore.checkoutCart = cart;
-    marketStore.checkoutStall = stalls.find((s) => s.id === cart.id);
-    setActivePage("shopping-cart-checkout");
+    marketStore.checkoutStall = marketStore.stalls.find((s) => s.id === cart.id);
+    marketStore.setActivePage("shopping-cart-checkout");
   };
 
   return {

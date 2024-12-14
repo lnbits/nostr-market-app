@@ -51,8 +51,8 @@ export function useOrders() {
       .filter((t) => t[0] === "p")
       .map((t) => t[1]);
 
-    const merchantrelayServices = relayService.findrelayServicesForMerchant(merchantPubkey[0]);
-    const relayCount = await relayService.publishEventTorelayServices(event, merchantrelayServices);
+    const merchantRelays = relayService.findRelaysForMerchant(merchantPubkey[0]);
+    const relayCount = await relayService.publishEventToRelays(event, merchantRelays);
     $q.notify({
       type: relayCount ? "positive" : "warning",
       message: relayCount
@@ -111,7 +111,7 @@ export function useOrders() {
     });
   }
 
-  const handleStructuredDm = async (event, peerPubkey) => {
+  const _handleStructuredDm = async (event, peerPubkey) => {
     try {
       const jsonData = JSON.parse(event.content);
       if ([0, 1, 2].indexOf(jsonData.type) !== -1) {
@@ -129,6 +129,7 @@ export function useOrders() {
 
 
   return {
+    _handleStructuredDm,
     placeOrder,
   }
 }

@@ -170,6 +170,7 @@ export function useStorage() {
   return {
     restoreFromStorage,
     persistStallsAndProducts,
+    persistOrderUpdate,
     persistRelaysData,
     persistDMEvent,
     applyUiConfigs,

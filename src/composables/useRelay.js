@@ -1,10 +1,12 @@
 import { useMarketStore } from "../stores/marketStore.js";
-import { useEvents } from "./useEvents";
 import { useQuasar } from "quasar"
+import { useEvents } from "./useEvents";
+import { useDirectMessage } from "./useDirectMessage";
 
 export function useRelay() {
   const marketStore = useMarketStore();
   const eventService = useEvents()
+  const messageService = useDirectMessage()
   const $q = useQuasar()
 
   const startRelaysHealtCheck = () => {
@@ -113,7 +115,7 @@ export function useRelay() {
       },
     ];
     if (marketStore.account?.pubkey) {
-      const since = noDmEvents() ? 0 : relayData.lastEventAt + 1;
+      const since = messageService._noDmEvents() ? 0 : relayData.lastEventAt + 1;
 
       filters.push(
         {

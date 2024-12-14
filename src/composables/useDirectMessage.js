@@ -67,8 +67,10 @@ export function useDirectMessage() {
     return dms.length === 0;
   };
 
+
   return {
     handleDmChatSelected,
     sendDirectMessage,
+    _noDmEvents, // used in relay
   };
 }

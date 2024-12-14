@@ -1,11 +1,13 @@
+import { useQuasar } from 'quasar'
 import { useMarketStore } from '../stores/marketStore'
 import { useStorage } from './useStorage'
-import { useQuasar } from 'quasar'
+import { useOrders } from './useOrders'
 
 export function useEvents() {
   const $q = useQuasar()
   const marketStore = useMarketStore();
   const storage = useStorage();
+  const orderService = useOrders()
 
   const processEvents = (events, relayData) => {
     if (!events?.length) return;
@@ -128,7 +130,7 @@ export function useEvents() {
 
     storage.persistDMEvent(e, peerPubkey);
     if (isJson(e.content)) {
-      await _handleStructuredDm(e, peerPubkey);
+      await orderService._handleStructuredDm(e, peerPubkey);
     }
   };
 
