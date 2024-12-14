@@ -1,15 +1,57 @@
-import { useQuasar } from 'quasar'
-import { useMarketStore } from '../stores/marketStore'
-import { useStorage } from './useStorage'
-import { useRelay } from './useRelay'
-import { useEvents } from './useEvents'
+import { useQuasar } from "quasar";
+import { useMarketStore } from "../stores/marketStore";
+import { useStorage } from "./useStorage";
+import { useRelay } from "./useRelay";
+import { useEvents } from "./useEvents";
 
 export function useMarket() {
-  const $q = useQuasar()
+  const $q = useQuasar();
   const marketStore = useMarketStore();
   const storage = useStorage();
   const relayService = useRelay();
   const eventService = useEvents();
+
+  const navigateTo = (
+    page,
+    opts = { stall: null, product: null, pubkey: null }
+  ) => {
+    console.log("### navigateTo", page, opts);
+
+    const { stall, product, pubkey } = opts;
+    const url = new URL(window.location);
+
+    const merchantPubkey =
+      pubkey || this.stalls.find((s) => s.id == stall)?.pubkey;
+    url.searchParams.set("merchant", merchantPubkey);
+
+    if (page === "stall" || page === "product") {
+      if (stall) {
+        this.activeStall = stall;
+        this.setActivePage("customer-stall");
+        url.searchParams.set("stall", stall);
+
+        this.activeProduct = product;
+        if (product) {
+          url.searchParams.set("product", product);
+        } else {
+          url.searchParams.delete("product");
+        }
+      }
+    } else {
+      this.activeMarket = null;
+      this.activeStall = null;
+      this.activeProduct = null;
+
+      url.searchParams.delete("merchant");
+      url.searchParams.delete("stall");
+      url.searchParams.delete("product");
+
+      this.setActivePage(page);
+    }
+
+    window.history.pushState({}, "", url);
+    // this.activePage = page
+  };
 
   const createMarket = async (navigateToConfig, merchants) => {
     try {
@@ -40,7 +82,7 @@ export function useMarket() {
     } finally {
       marketStore.setActivePage("market-config");
     }
-  }
+  };
 
   const addMarket = async (naddr) => {
     if (!naddr) return;
@@ -69,16 +111,14 @@ export function useMarket() {
 
       if (isJson(event.content)) {
         market.opts = JSON.parse(event.content);
-        $q
-          .dialog(
-            confirm(
-              `Do you want to use the look and feel of the '${market.opts.name}' market?`
-            )
+        $q.dialog(
+          confirm(
+            `Do you want to use the look and feel of the '${market.opts.name}' market?`
           )
-          .onOk(async () => {
-            marketStore.config = { ...marketStore.config, opts: market.opts };
-            storage.applyUiConfigs(market?.opts);
-          });
+        ).onOk(async () => {
+          marketStore.config = { ...marketStore.config, opts: market.opts };
+          storage.applyUiConfigs(market?.opts);
+        });
       }
 
       marketStore.markets = marketStore.markets.filter(
@@ -95,7 +135,7 @@ export function useMarket() {
     } finally {
       marketStore.setActivePage("market");
     }
-  }
+  };
 
   const updateMarket = (market) => {
     try {
@@ -142,7 +182,7 @@ export function useMarket() {
     } finally {
       marketStore.isLoading = false;
     }
-  }
+  };
   const deleteMarket = (market) => {
     try {
       marketStore.isLoading = true;
@@ -171,19 +211,23 @@ export function useMarket() {
     } finally {
       marketStore.isLoading = false;
     }
-  }
+  };
   const toggleMarket = () => {
-    marketStore.allMarketsSelected = !marketStore.markets.find((m) => !m.selected);
+    marketStore.allMarketsSelected = !marketStore.markets.find(
+      (m) => !m.selected
+    );
     $q.localStorage.set("nostrmarket.markets", marketStore.markets);
-  }
+  };
   const toggleAllMarkets = () => {
-    marketStore.markets.forEach((m) => (m.selected = marketStore.allMarketsSelected));
+    marketStore.markets.forEach(
+      (m) => (m.selected = marketStore.allMarketsSelected)
+    );
     $q.localStorage.set("nostrmarket.markets", marketStore.markets);
-  }
+  };
   const showMarketConfig = (index) => {
     marketStore.activeMarket = marketStore.markets[index];
     marketStore.transitToPage("market-config");
-  }
+  };
   const publishNaddr = async (marketData) => {
     if (!marketStore.account?.privkey) {
       marketStore.openAccountDialog();
@@ -206,7 +250,10 @@ export function useMarket() {
     };
     event.id = NostrTools.getEventHash(event);
     try {
-      event.sig = await NostrTools.signEvent(event, marketStore.account.privkey);
+      event.sig = await NostrTools.signEvent(
+        event,
+        marketStore.account.privkey
+      );
 
       const relayCount = await relayService.publishEventToRelays(
         event,
@@ -236,7 +283,7 @@ export function useMarket() {
     });
     marketStore.naddrDialog.publishedNaddr = naddr;
     marketStore.naddrDialog.show = true;
-  }
+  };
 
   const _handleNewMerchant = (market, merchantPubkey) => {
     Object.keys(marketStore.relaysData).forEach(async (relayKey) => {
@@ -252,7 +299,7 @@ export function useMarket() {
       relayData.merchants.push(merchantPubkey);
       await relayService.requeryRelay(relayKey);
     });
-  }
+  };
 
   const _handleNewRelay = async (relayUrl, market) => {
     const relayKey = await relayService.toRelayKey(relayUrl);
@@ -271,7 +318,7 @@ export function useMarket() {
       await relayService.loadRelayData(relayUrl, market.opts.merchants);
       await relayService.connectToRelay(relayKey);
     }
-  }
+  };
   const _handleRemoveMerchant = (merchantPubkey) => {
     const marketWithMerchant = marketStore.markets.find((m) =>
       m.opts.merchants.find((mr) => mr === merchantPubkey)
@@ -280,11 +327,15 @@ export function useMarket() {
     if (marketWithMerchant) return;
 
     // remove all products and stalls from that merchant
-    marketStore.products = marketStore.products.filter((p) => p.pubkey !== merchantPubkey);
-    marketStore.stalls = marketStore.stalls.filter((s) => s.pubkey !== merchantPubkey);
+    marketStore.products = marketStore.products.filter(
+      (p) => p.pubkey !== merchantPubkey
+    );
+    marketStore.stalls = marketStore.stalls.filter(
+      (s) => s.pubkey !== merchantPubkey
+    );
 
     _removeSubscriptionsForMerchant(merchantPubkey);
-  }
+  };
   const _removeSubscriptionsForMerchant = (merchantPubkey) => {
     Object.keys(marketStore.relaysData).forEach(async (relayKey) => {
       const relayData = marketStore.relaysData[relayKey];
@@ -295,7 +346,7 @@ export function useMarket() {
 
       await relayService.requeryRelay(relayKey);
     });
-  }
+  };
   const _handleRemovedRelay = async (relayUrl) => {
     // todo: later
     // leave products and stalls alone
@@ -308,10 +359,11 @@ export function useMarket() {
       delete marketStore.relaysData[relayKey];
       relayService.persistRelaysData();
     }
-  }
+  };
 
   return {
     createMarket,
+    navigateTo,
     addMarket,
     updateMarket,
     deleteMarket,
@@ -324,6 +376,5 @@ export function useMarket() {
     _handleRemoveMerchant,
     _removeSubscriptionsForMerchant,
     _handleRemovedRelay,
-  }
+  };
 }
-

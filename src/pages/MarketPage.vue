@@ -675,90 +675,13 @@ export default defineComponent({
   },
   computed: {},
   methods: {
-    async _handleQueryParams(params) {
-      const merchantPubkey = params.get("merchant");
-      console.log("### merchantPubkey", merchantPubkey);
-      const stallId = params.get("stall");
-      const productId = params.get("product");
-
-      // What component to render on start
-      if (stallId) {
-        this.setActivePage("customer-stall");
-        if (productId) {
-          this.activeProduct = productId;
-        }
-        this.activeStall = stallId;
-      }
-      if (merchantPubkey) {
-        if (!isValidKey(merchantPubkey)) {
-          this.$q.notify({
-            message: "Invalid merchant public key!",
-            icon: "warning",
-          });
-        } else if (this.allMerchants.includes(merchantPubkey)) {
-          console.log(
-            `Request (URL) merchant (${merchantPubkey}) already exists!`
-          );
-        } else {
-          this.$q
-            .dialog(
-              confirm(
-                "We found a merchant pubkey in your request. " +
-                  "Do you want to add it to the merchants list?"
-              )
-            )
-            .onOk(async () => {
-              this.createMarket(false, [merchantPubkey]);
-            });
-        }
-      }
-    },
     handleFilterData(filterData) {
       console.log("### handleFilterData", filterData);
       this.filterData = filterData;
       this.setActivePage("market");
     },
-
     /////////////////////////////////////////////////////////// MISC ///////////////////////////////////////////////////////////
 
-    navigateTo(page, opts = { stall: null, product: null, pubkey: null }) {
-      console.log("### navigateTo", page, opts);
-
-      const { stall, product, pubkey } = opts;
-      const url = new URL(window.location);
-
-      const merchantPubkey =
-        pubkey || this.stalls.find((s) => s.id == stall)?.pubkey;
-      url.searchParams.set("merchant", merchantPubkey);
-
-      if (page === "stall" || page === "product") {
-        if (stall) {
-          this.activeStall = stall;
-          this.setActivePage("customer-stall");
-          url.searchParams.set("stall", stall);
-
-          this.activeProduct = product;
-          if (product) {
-            url.searchParams.set("product", product);
-          } else {
-            url.searchParams.delete("product");
-          }
-        }
-      } else {
-        this.activeMarket = null;
-        this.activeStall = null;
-        this.activeProduct = null;
-
-        url.searchParams.delete("merchant");
-        url.searchParams.delete("stall");
-        url.searchParams.delete("product");
-
-        this.setActivePage(page);
-      }
-
-      window.history.pushState({}, "", url);
-      // this.activePage = page
-    },
     copyUrl: function () {
       this.copyText(window.location);
     },
@@ -771,7 +694,6 @@ export default defineComponent({
         });
       });
     },
-
     showInvoiceQr(invoice) {
       if (!invoice) return;
       this.qrCodeDialog = {
@@ -782,16 +704,13 @@ export default defineComponent({
         show: true,
       };
     },
-    focusOnElement(elementId) {
-      document.getElementById(elementId)?.scrollIntoView();
-      this.showFilterDetails = true;
-    },
   },
 });
 </script>
 
 <script setup>
 import { onMounted } from "vue";
+import { storeToRefs } from "pinia";
 import { useQuasar } from "quasar";
 import { useStorage } from "../composables/useStorage.js";
 import { useMarketStore } from "../stores/marketStore";
@@ -804,9 +723,12 @@ import { useMarket } from "../composables/useMarket.js";
 import { useDirectMessage } from "../composables/useDirectMessage.js";
 
 const $q = useQuasar();
-window.$q = $q; // if necessary
+// window.$q = $q; // if necessary
+
+const marketStore = useMarketStore();
 
 const {
+  // State
   account,
   accountDialog,
   market,
@@ -842,7 +764,35 @@ const {
   sort,
   config,
   readNotes,
-} = useMarketStore();
+  qInstance,
+
+  // Getters (no-argument getters only)
+  processedEventIds,
+  marketsName,
+  stallName,
+  productName,
+  isValidAccountKey,
+  allCartsItemCount,
+  allCategories,
+  allCurrencies,
+  allMerchants,
+  allRelays,
+  activeMarketRelaysData,
+  dmPeers,
+  selectedMarketsMerchants,
+  filteredProducts,
+  filterCount,
+  filterStalls,
+} = storeToRefs(marketStore);
+
+// Note: The following "getters" are defined as functions with arguments:
+//   allStallCatgories(stallId)
+//   allStallImages(stallId)
+// Because they require arguments, they are not standard computed properties and
+// won't appear as refs. To use them, call them directly from the store instance.
+// Example:
+// const categories = marketStore.allStallCatgories(someStallId)
+// const images = marketStore.allStallImages(someStallId)
 
 const {
   restoreFromStorage,
@@ -899,26 +849,73 @@ const { placeOrder } = useOrders();
 
 const { handleDmChatSelected, sendDirectMessage } = useDirectMessage();
 
-defineExpose({
-  qrCodeDialog,
-});
+const _handleQueryParams = async (params) => {
+  const merchantPubkey = params.get("merchant");
+  console.log("### merchantPubkey", merchantPubkey);
+  const stallId = params.get("stall");
+  const productId = params.get("product");
 
-const defaultBanner = this.$q.config.staticPath + "images/nostr-cover.png";
-const defaultLogo = this.$q.config.staticPath + "images/nostr-avatar.png";
+  // What component to render on start
+  if (stallId) {
+    this.setActivePage("customer-stall");
+    if (productId) {
+      this.activeProduct = productId;
+    }
+    this.activeStall = stallId;
+  }
+  if (merchantPubkey) {
+    if (!isValidKey(merchantPubkey)) {
+      this.$q.notify({
+        message: "Invalid merchant public key!",
+        icon: "warning",
+      });
+    } else if (this.allMerchants.includes(merchantPubkey)) {
+      console.log(`Request (URL) merchant (${merchantPubkey}) already exists!`);
+    } else {
+      this.$q
+        .dialog(
+          confirm(
+            "We found a merchant pubkey in your request. " +
+              "Do you want to add it to the merchants list?"
+          )
+        )
+        .onOk(async () => {
+          this.createMarket(false, [merchantPubkey]);
+        });
+    }
+  }
+};
+const handleFilterData = (filterData) => {
+  console.log("### handleFilterData", filterData);
+  this.filterData = filterData;
+  this.setActivePage("market");
+};
+
+const focusOnElement = (elementId) => {
+  // Scroll the element into view
+  const element = document.getElementById(elementId);
+  if (element) {
+    element.scrollIntoView();
+    this.showFilterDetails = true;
+  }
+};
+
+const defaultBanner = $q.config.staticPath + "images/nostr-cover.png";
+const defaultLogo = $q.config.staticPath + "images/nostr-avatar.png";
 const defaultMarketNaddr =
   "naddr1qqjr2e34v3jrzd3e95ensdfn956rywps94snwcmr95crvepexc6kxcfcxqmnvqg5waehxw309aex2mrp0yhxgctdw4eju6t0qyv8wumn8ghj7un9d3shjtnndehhyapwwdhkx6tpdsq36amnwvaz7tmwdaehgu3dwp6kytnhv4kxcmmjv3jhytnwv46qzxthwden5te0dehhxarj9eax2cn9v3jk2tnrd3hh2eqprfmhxue69uhhyetvv9ujummjv9hxwetsd9kxctnyv4mqzrthwden5te0dehhxtnvdakqz9rhwden5te0wfjkccte9ehx7um5wghxyecpzpmhxue69uhkummnw3ezuamfdejsz9thwden5te0v4jx2m3wdehhxarj9ekxzmnyqgstle9w09rt8y7xdlqs33v23vqvdtqx6j6j2wa4984g9n77tppx2tqrqsqqqa2ruusd5z";
 
 onMounted(async () => {
   try {
-    bannerImage = defaultBanner;
-    logoImage = defaultLogo;
+    bannerImage.value = defaultBanner;
+    logoImage.value = defaultLogo;
     restoreFromStorage();
 
     const params = new URLSearchParams(window.location.search);
     await addMarket(params.get("naddr"));
     await _handleQueryParams(params);
 
-    isLoading = false;
+    isLoading.value = false;
     await loadRelaysData();
     startRelaysHealtCheck();
   } catch (error) {
