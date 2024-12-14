@@ -982,67 +982,6 @@ export default defineComponent({
       this.setActivePage("market");
     },
 
-    /////////////////////////////////////////////////////////// DIRRECT MESSAGES ///////////////////////////////////////////////////////////
-
-    handleDmChatSelected(pubkey) {
-      this.dmEvents =
-        this.$q.localStorage.getItem(`nostrmarket.dm.${pubkey}`) || {};
-    },
-
-    async sendDirectMessage(dm) {
-      if (!this.account?.pubkey) {
-        this.$q.notify({
-          type: "warning",
-          message: "Cannot send message. No user logged in!",
-        });
-        return;
-      }
-      try {
-        const event = {
-          ...(await NostrTools.getBlankEvent()),
-          kind: 4,
-          created_at: Math.floor(Date.now() / 1000),
-          tags: [["p", dm.to]],
-          pubkey: this.account.pubkey,
-        };
-        event.content = await NostrTools.nip04.encrypt(
-          this.account.privkey,
-          dm.to,
-          dm.message
-        );
-
-        event.id = NostrTools.getEventHash(event);
-        event.sig = await NostrTools.signEvent(event, this.account.privkey);
-
-        await this._sendDmEvent(event);
-        event.content = dm.message;
-        this.persistDMEvent(event, dm.to);
-      } catch (error) {
-        this.$q.notify({
-          type: "warning",
-          message: "Failed to send message!",
-        });
-      }
-    },
-
-    async _sendDmEvent(event) {
-      const toPubkey = event.tags.filter((t) => t[0] === "p").map((t) => t[1]);
-
-      let relays = this.findRelaysForMerchant(toPubkey[0]);
-      if (!relays?.length) {
-        relays = [...defaultRelays];
-      }
-      await this.publishEventToRelays(event, relays);
-    },
-
-    _noDmEvents() {
-      const dms = this.$q.localStorage
-        .getAllKeys()
-        .filter((key) => key.startsWith("nostrmarket.dm"));
-
-      return dms.length === 0;
-    },
-
     /////////////////////////////////////////////////////////// MISC ///////////////////////////////////////////////////////////
 
     navigateTo(page, opts = { stall: null, product: null, pubkey: null }) {
@@ -1184,6 +1123,7 @@ import { useShoppingCart } from "../composables/useShoppingCart.js";
 import { useOrders } from "../composables/useOrders.js";
 import { useEvents } from "../composables/useEvents.js";
 import { useMarket } from "../composables/useMarket.js";
+import { useDirectMessage } from "../composables/useDirectMessage.js";
 
 const $q = useQuasar();
 window.$q = $q; // if necessary
@@ -1244,6 +1184,8 @@ const {
 const { placeOrder } = useOrders();
 
 const { processEvents } = useEvents();
+
+const { handleDmChatSelected, sendDirectMessage } = useDirectMessage();
 
 const init = async () => {
   try {
