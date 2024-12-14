@@ -4,12 +4,14 @@ import { useQuasar } from 'quasar'
 import { useMarketStore } from '../stores/marketStore'
 import { useShoppingCart } from '../composables/useShoppingCart'
 import { useRelay } from '../composables/useRelay'
+import { useStorage } from '../composables/useStorage'
 
 export function useOrders() {
   const $q = useQuasar()
   const marketStore = useMarketStore()
   const shoppingCart = useShoppingCart()
-  const Relay = useRelay()
+  const relayService = useRelay()
+  const storage = useStorage()
 
   const placeOrder = async ({ event, order, cartId }) => {
     if (!marketStore.account?.privkey) {
@@ -28,7 +30,7 @@ export function useOrders() {
       event.sig = await NostrTools.signEvent(event, marketStore.account.privkey);
 
       await sendOrderEvent(event);
-      this.persistOrderUpdate(
+      storage.persistOrderUpdate(
         marketStore.checkoutStall.pubkey,
         event.createdat,
         order
@@ -49,8 +51,8 @@ export function useOrders() {
       .filter((t) => t[0] === "p")
       .map((t) => t[1]);
 
-    const merchantRelays = Relay.findRelaysForMerchant(merchantPubkey[0]);
-    const relayCount = await Relay.publishEventToRelays(event, merchantRelays);
+    const merchantrelayServices = relayService.findrelayServicesForMerchant(merchantPubkey[0]);
+    const relayCount = await relayService.publishEventTorelayServices(event, merchantrelayServices);
     $q.notify({
       type: relayCount ? "positive" : "warning",
       message: relayCount
@@ -113,7 +115,7 @@ export function useOrders() {
     try {
       const jsonData = JSON.parse(event.content);
       if ([0, 1, 2].indexOf(jsonData.type) !== -1) {
-        this.persistOrderUpdate(peerPubkey, event.createdat, jsonData);
+        storage.persistOrderUpdate(peerPubkey, event.createdat, jsonData);
       }
       if (jsonData.type === 1) {
         handlePaymentRequest(jsonData);
