@@ -908,6 +908,7 @@ const defaultMarketNaddr =
 
 onMounted(async () => {
   try {
+    marketStore.pool = new NostrTools.SimplePool();
     bannerImage.value = defaultBanner;
     logoImage.value = defaultLogo;
     restoreFromStorage();

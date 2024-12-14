@@ -99,7 +99,7 @@ export function useMarket() {
         selected: true,
       };
 
-      const pool = new NostrTools.SimplePool();
+      const pool = marketStore.pool;
       const event = await pool.get(market.relays, {
         kinds: [30019],
         limit: 1,
