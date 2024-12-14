@@ -1524,122 +1524,6 @@ export default defineComponent({
       return dms.length === 0;
     },
 
-    /////////////////////////////////////////////////////////// ORDERS ///////////////////////////////////////////////////////////
-
-    async placeOrder({ event, order, cartId }) {
-      if (!this.account?.privkey) {
-        this.openAccountDialog();
-        return;
-      }
-      try {
-        this.activeOrderId = order.id;
-        event.content = await NostrTools.nip04.encrypt(
-          this.account.privkey,
-          this.checkoutStall.pubkey,
-          JSON.stringify(order)
-        );
-
-        event.id = NostrTools.getEventHash(event);
-        event.sig = await NostrTools.signEvent(event, this.account.privkey);
-
-        await this._sendOrderEvent(event);
-        this._persistOrderUpdate(
-          this.checkoutStall.pubkey,
-          event.created_at,
-          order
-        );
-        this.removeCart(cartId);
-        this.setActivePage("shopping-cart-list");
-      } catch (error) {
-        console.warn(error);
-        this.$q.notify({
-          type: "warning",
-          message: "Failed to place order!",
-        });
-      }
-    },
-
-    async _sendOrderEvent(event) {
-      const merchantPubkey = event.tags
-        .filter((t) => t[0] === "p")
-        .map((t) => t[1]);
-
-      const merchantRelays = this.findRelaysForMerchant(merchantPubkey[0]);
-      const relayCount = await this.publishEventToRelays(event, merchantRelays);
-      this.$q.notify({
-        type: relayCount ? "positive" : "warning",
-        message: relayCount
-          ? `The order has been placed (${relayCount} relays)!`
-          : "Order could not be placed",
-      });
-      this.qrCodeDialog = {
-        data: {
-          payment_request: null,
-          message: null,
-        },
-        dismissMsg: null,
-        show: !!relayCount,
-      };
-    },
-
-    _handlePaymentRequest(json) {
-      if (json.id && json.id !== this.activeOrderId) {
-        // not for active order, store somewehre else
-        return;
-      }
-      if (!json.payment_options?.length) {
-        this.qrCodeDialog.data.message = json.message || "Unexpected error";
-        return;
-      }
-
-      const paymentRequest = json.payment_options.find(
-        (o) => o.type == "ln"
-      ).link;
-      if (!paymentRequest) return;
-      this.qrCodeDialog.data.payment_request = paymentRequest;
-      this.qrCodeDialog.dismissMsg = this.$q.notify({
-        timeout: 10000,
-        message: "Waiting for payment...",
-      });
-    },
-
-    _handleOrderStatusUpdate(jsonData) {
-      if (jsonData.id && jsonData.id !== this.activeOrderId) {
-        // not for active order, store somewehre else
-        return;
-      }
-      if (this.qrCodeDialog.dismissMsg) {
-        this.qrCodeDialog.dismissMsg();
-      }
-      this.qrCodeDialog.show = false;
-      const message = jsonData.shipped
-        ? "Order shipped"
-        : jsonData.paid
-        ? "Order paid"
-        : "Order notification";
-      this.$q.notify({
-        type: "positive",
-        message: message,
-        caption: jsonData.message || "",
-      });
-    },
-
-    async _handleStructuredDm(event, peerPubkey) {
-      try {
-        const jsonData = JSON.parse(event.content);
-        if ([0, 1, 2].indexOf(jsonData.type) !== -1) {
-          this._persistOrderUpdate(peerPubkey, event.created_at, jsonData);
-        }
-        if (jsonData.type === 1) {
-          this._handlePaymentRequest(jsonData);
-        } else if (jsonData.type === 2) {
-          this._handleOrderStatusUpdate(jsonData);
-        }
-      } catch (e) {
-        console.warn("Unable to handle incomming DM", e);
-      }
-    },
-
     /////////////////////////////////////////////////////////// PERSIST ///////////////////////////////////////////////////////////
 
     _restoreFromStorage() {
@@ -1913,6 +1797,7 @@ import { useMarketStore } from "../stores/marketStore";
 import { useAccount } from "../composables/useAccount.js";
 import { useRelay } from "../composables/useRelay.js";
 import { useShoppingCart } from "../composables/useShoppingCart.js";
+import { useOrders } from "../composables/useOrders.js";
 
 const $q = useQuasar();
 window.$q = $q; // if necessary
@@ -1946,6 +1831,10 @@ const {
   removeCart,
   checkoutStallCart,
 } = useShoppingCart();
+
+const {
+  placeOrder,
+} = useOrders();
 
 const init = async () => {
   try {
