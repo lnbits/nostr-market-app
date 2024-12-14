@@ -5,9 +5,11 @@ export function useRelay() {
 
   const startRelaysHealtCheck = () => {
     setInterval(() => {
+      if (!marketStore.relaysData) return;
+
       Object.keys(marketStore.relaysData).forEach((k) => {
         const relayData = marketStore.relaysData[k];
-        if (relayData.relay.status === WebSocket.CLOSED) {
+        if (relayData?.relay?.status === WebSocket.CLOSED) {
           connectToRelay(k);
         }
       });
@@ -19,6 +21,10 @@ export function useRelay() {
   };
 
   const loadRelaysData = async () => {
+    if (!marketStore.relaysData) {
+      marketStore.relaysData = {};
+    }
+
     if (!marketStore.markets?.length) return;
 
     for (const market of marketStore.markets) {
@@ -32,6 +38,10 @@ export function useRelay() {
 
   const loadRelayData = async (relayUrl, merchants) => {
     const relayKey = await toRelayKey(relayUrl);
+    if (!marketStore.relaysData) {
+      marketStore.relaysData = {};
+    }
+
     marketStore.relaysData[relayKey] = marketStore.relaysData[relayKey] || {
       relayUrl,
       connected: false,
