@@ -1462,64 +1462,6 @@ export default defineComponent({
         this._persistRelaysData();
       }
     },
-    /////////////////////////////////////////////////////////// SHOPPING CART ///////////////////////////////////////////////////////////
-
-    addProductToCart(item) {
-      let stallCart = this.shoppingCarts.find((s) => s.id === item.stall_id);
-      if (!stallCart) {
-        stallCart = {
-          id: item.stall_id,
-          products: [],
-        };
-        this.shoppingCarts.push(stallCart);
-      }
-      stallCart.merchant = item.pubkey;
-
-      let product = stallCart.products.find((p) => p.id === item.id);
-      if (!product) {
-        product = { ...item, orderedQuantity: 0 };
-        stallCart.products.push(product);
-      }
-      product.orderedQuantity = Math.min(
-        product.quantity,
-        item.orderedQuantity || product.orderedQuantity + 1
-      );
-
-      this.$q.localStorage.set("nostrmarket.shoppingCarts", this.shoppingCarts);
-
-      this.$q.notify({
-        type: "positive",
-        message: "Product added to cart!",
-      });
-    },
-
-    removeProductFromCart(item) {
-      const stallCart = this.shoppingCarts.find((c) => c.id === item.stallId);
-      if (stallCart) {
-        stallCart.products = stallCart.products.filter(
-          (p) => p.id !== item.productId
-        );
-        if (!stallCart.products.length) {
-          this.shoppingCarts = this.shoppingCarts.filter(
-            (s) => s.id !== item.stallId
-          );
-        }
-        this.$q.localStorage.set(
-          "nostrmarket.shoppingCarts",
-          this.shoppingCarts
-        );
-      }
-    },
-    removeCart(cartId) {
-      this.shoppingCarts = this.shoppingCarts.filter((s) => s.id !== cartId);
-      this.$q.localStorage.set("nostrmarket.shoppingCarts", this.shoppingCarts);
-    },
-
-    checkoutStallCart(cart) {
-      this.checkoutCart = cart;
-      this.checkoutStall = this.stalls.find((s) => s.id === cart.id);
-      this.setActivePage("shopping-cart-checkout");
-    },
 
     /////////////////////////////////////////////////////////// DIRRECT MESSAGES ///////////////////////////////////////////////////////////
 
@@ -1623,10 +1565,7 @@ export default defineComponent({
         .map((t) => t[1]);
 
       const merchantRelays = this.findRelaysForMerchant(merchantPubkey[0]);
-      const relayCount = await this.publishEventToRelays(
-        event,
-        merchantRelays
-      );
+      const relayCount = await this.publishEventToRelays(event, merchantRelays);
       this.$q.notify({
         type: relayCount ? "positive" : "warning",
         message: relayCount
@@ -1971,11 +1910,12 @@ export default defineComponent({
 <script setup>
 import { useQuasar } from "quasar";
 import { useMarketStore } from "../stores/marketStore";
-import { useAccount } from '../composables/useAccount.js'
-import { useRelay } from '../composables/useRelay.js'
+import { useAccount } from "../composables/useAccount.js";
+import { useRelay } from "../composables/useRelay.js";
+import { useShoppingCart } from "../composables/useShoppingCart.js";
 
 const $q = useQuasar();
-window.$q = $q // if necessary
+window.$q = $q; // if necessary
 
 const { store } = useMarketStore();
 
@@ -1985,7 +1925,7 @@ const {
   createAccount,
   logout,
   clearAllData,
-} = useAccount()
+} = useAccount();
 
 const {
   startRelaysHealtCheck,
@@ -1998,17 +1938,23 @@ const {
   queryRelay,
   publishEventToRelays,
   findRelaysForMerchant,
-} = useRelay()
+} = useRelay();
+
+const {
+  addProductToCart,
+  removeProductFromCart,
+  removeCart,
+  checkoutStallCart,
+} = useShoppingCart();
 
 const init = async () => {
   try {
     await loadRelaysData();
     startRelaysHealtCheck();
   } catch (error) {
-    console.error('Failed to initialize:', error);
+    console.error("Failed to initialize:", error);
   }
-}
+};
 
 init();
-
 </script>
