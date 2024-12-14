@@ -64,17 +64,27 @@ export function useEvents() {
       return;
     }
 
-    // Debug stalls array
     console.log("All stalls:", marketStore.stalls);
 
-    const stall = marketStore.stalls.find((s) => s.id === p.stall_id);
-    console.log("Looking for stall_id:", p.stall_id);
-    console.log("Found stall:", stall);
+    // Debug each stall comparison
+    marketStore.stalls.forEach(s => {
+      console.log(`Comparing stall ID: "${s.id}" (${typeof s.id}) with "${p.stall_id}" (${typeof p.stall_id})`);
+      console.log('Length:', s.id.length, p.stall_id.length);
+      console.log('Equal?:', s.id === p.stall_id);
+      // Log the character codes to check for hidden characters
+      console.log('Char codes stall_id:', [...s.id].map(c => c.charCodeAt(0)));
+      console.log('Char codes product.stall_id:', [...p.stall_id].map(c => c.charCodeAt(0)));
+    });
+
+    const stall = marketStore.stalls.find((s) => {
+      // Try trimming both strings and comparing
+      return s.id.trim() === p.stall_id.trim();
+    });
 
     if (!stall) {
       console.log("No stall found for stall_id:", p.stall_id);
-      // Instead of returning, we could queue this product for later processing
-      // when its stall becomes available
+      // Log the exact stall we're looking for to help debug
+      console.log("Searching for exact stall_id:", JSON.stringify(p.stall_id));
       return;
     }
 
