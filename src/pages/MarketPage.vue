@@ -1016,75 +1016,6 @@ export default defineComponent({
       this._applyUiConfigs(this.config?.opts);
     },
 
-    /////////////////////////////////////////////////////////// ACCOUNT ///////////////////////////////////////////////////////////
-
-    generateKeyPair() {
-      this.accountDialog.data.key = NostrTools.generatePrivateKey();
-      this.accountDialog.data.watchOnly = false;
-    },
-    openAccountDialog() {
-      this.accountDialog.show = true;
-    },
-    async createAccount() {
-      if (isValidKey(this.accountDialog.data.key, "nsec")) {
-        let { key, watchOnly } = this.accountDialog.data;
-        if (key.startsWith("n")) {
-          let { type, data } = NostrTools.nip19.decode(key);
-          key = data;
-        }
-        const privkey = watchOnly ? null : key;
-        const pubkey = watchOnly ? key : NostrTools.getPublicKey(key);
-        this.$q.localStorage.set("nostrmarket.account", {
-          privkey,
-          pubkey,
-          nsec: NostrTools.nip19.nsecEncode(key),
-          npub: NostrTools.nip19.npubEncode(pubkey),
-
-          useExtension: false,
-        });
-        this.accountDialog.data = {
-          watchOnly: false,
-          key: null,
-        };
-        this.accountDialog.show = false;
-        this.account = this.$q.localStorage.getItem("nostrmarket.account");
-        await this._requeryAllRelays();
-      }
-      this.accountDialog.show = false;
-    },
-    logout() {
-      window.localStorage.removeItem("nostrmarket.account");
-      this._clearNonAccountData();
-      window.location.href = window.location.origin + window.location.pathname;
-      this.account = null;
-      this.accountMetadata = null;
-    },
-    clearAllData() {
-      this.$q
-        .dialog(
-          confirm(
-            "This will remove all information about merchants, products, relays and others. " +
-              "You will NOT be logged out. Do you want to proceed?"
-          )
-        )
-        .onOk(async () => {
-          this._clearNonAccountData();
-          window.location.href =
-            window.location.origin + window.location.pathname;
-        });
-    },
-    _clearNonAccountData() {
-      this.$q.localStorage
-        .getAllKeys()
-        .filter((key) => key !== "nostrmarket.account")
-        .forEach((key) => window.localStorage.removeItem(key));
-
-      this.orders = [];
-      this.config = { opts: null };
-      this.shoppingCarts = [];
-      this.checkoutCart = null;
-    },
-
     /////////////////////////////////////////////////////////// RELAYS ///////////////////////////////////////////////////////////
 
     _startRelaysHealtCheck() {
@@ -2211,7 +2142,17 @@ export default defineComponent({
 <script setup>
 import { useQuasar } from "quasar";
 import { useMarketStore } from "../stores/marketStore";
+import { useAccount } from '../composables/useAccount.js'
 
+const {
+  generateKeyPair,
+  openAccountDialog,
+  createAccount,
+  logout,
+  clearAllData,
+} = useAccount()
+
+// TODO try removing window.$q and just assign $q
 window.$q = useQuasar();
 
 const { store } = useMarketStore();
