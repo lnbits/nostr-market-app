@@ -608,11 +608,6 @@
   </q-dialog>
 </template>
 
-<script setup>
-import { useQuasar } from "quasar";
-window.$q = useQuasar();
-</script>
-
 <script>
 import { defineComponent } from "vue";
 import VueQrcode from "@chenfengyuan/vue-qrcode";
@@ -2211,4 +2206,13 @@ export default defineComponent({
     },
   },
 });
+</script>
+
+<script setup>
+import { useQuasar } from "quasar";
+import { useMarketStore } from "../stores/marketStore";
+
+window.$q = useQuasar();
+
+const { store } = useMarketStore();
 </script>
