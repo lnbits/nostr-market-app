@@ -1,4 +1,4 @@
-import { useQuasr } from "quasar";
+import { useQuasar } from "quasar";
 import { useMarketStore } from "../stores/marketStore";
 
 export function useDirectMessage() {
