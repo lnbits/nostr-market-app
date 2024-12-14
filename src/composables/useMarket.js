@@ -21,16 +21,16 @@ export function useMarket() {
     const url = new URL(window.location);
 
     const merchantPubkey =
-      pubkey || this.stalls.find((s) => s.id == stall)?.pubkey;
+      pubkey || marketStore.stalls.find((s) => s.id == stall)?.pubkey;
     url.searchParams.set("merchant", merchantPubkey);
 
     if (page === "stall" || page === "product") {
       if (stall) {
-        this.activeStall = stall;
-        this.setActivePage("customer-stall");
+        marketStore.activeStall = stall;
+        marketStore.setActivePage("customer-stall");
         url.searchParams.set("stall", stall);
 
-        this.activeProduct = product;
+        marketStore.activeProduct = product;
         if (product) {
           url.searchParams.set("product", product);
         } else {
@@ -38,19 +38,19 @@ export function useMarket() {
         }
       }
     } else {
-      this.activeMarket = null;
-      this.activeStall = null;
-      this.activeProduct = null;
+      marketStore.activeMarket = null;
+      marketStore.activeStall = null;
+      marketStore.activeProduct = null;
 
       url.searchParams.delete("merchant");
       url.searchParams.delete("stall");
       url.searchParams.delete("product");
 
-      this.setActivePage(page);
+      marketStore.setActivePage(page);
     }
 
     window.history.pushState({}, "", url);
-    // this.activePage = page
+    // marketStore.activePage = page
   };
 
   const createMarket = async (navigateToConfig, merchants) => {
