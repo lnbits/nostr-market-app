@@ -250,7 +250,7 @@ export function useMarket() {
     };
     event.id = NostrTools.getEventHash(event);
     try {
-      event.sig = await NostrTools.signEvent(
+      event.sig = await NostrTools.getSignature(
         event,
         marketStore.account.privkey
       );

@@ -45,7 +45,7 @@ export function useOrders() {
       )
 
       event.id = NostrTools.getEventHash(event)
-      event.sig = await NostrTools.signEvent(event, marketStore.account.privkey)
+      event.sig = await NostrTools.getSignature(event, marketStore.account.privkey)
 
       await sendOrderEvent(event)
       storage.persistOrderUpdate(

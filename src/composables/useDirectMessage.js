@@ -33,7 +33,7 @@ export function useDirectMessage() {
       );
 
       event.id = NostrTools.getEventHash(event);
-      event.sig = await NostrTools.signEvent(
+      event.sig = await NostrTools.getSignature(
         event,
         marketStore.account.privkey
       );
