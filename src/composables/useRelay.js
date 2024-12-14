@@ -1,9 +1,9 @@
-// TODO: need to link processEvents
-
 import { useMarketStore } from "../stores/marketStore.js";
+import { useEvents } from "./useEvents";
 
 export function useRelay() {
   const marketStore = useMarketStore();
+  const eventService = useEvents()
 
   const startRelaysHealtCheck = () => {
     setInterval(() => {
@@ -56,9 +56,7 @@ export function useRelay() {
   };
 
   const getLastEventDateForRelay = (relayUrl) => {
-    const relay = (
-      $q.localStorage.getItem("nostrmarket.relays") || []
-    ).find(
+    const relay = ($q.localStorage.getItem("nostrmarket.relays") || []).find(
       (r) => r.relayUrl === relayUrl
     );
     console.log("### getLastEventForRelay", relayUrl, relay);
@@ -141,15 +139,15 @@ export function useRelay() {
 
     if (events?.length) {
       // TODO:
-      await processEvents(events, relayData);
+      await eventService.processEvents(events, relayData);
     }
 
     relayData.sub = relayData.relay.sub(filters);
     relayData.sub.on(
       "event",
       (event) => {
-      // TODO:
-        processEvents([event], relayData);
+        // TODO:
+        eventService.processEvents([event], relayData);
       },
       { id: "masterSub" } //pass ID to cancel previous sub
     );

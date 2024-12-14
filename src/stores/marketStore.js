@@ -79,9 +79,19 @@ export const useMarketStore = defineStore("marketStore", {
     },
   }),
 
+  getters: {
+    processedEventIds: (state) => {
+      const stallsEventIds = state.stalls.map((s) => s.eventId);
+      const productsEventIds = state.products.map((p) => p.eventId);
+      // todo: DMs
+
+      return stallsEventIds.concat(productsEventIds);
+    },
+  },
+
   actions: {
     openAccountDialog() {
-      this.accountDialog.show = true
+      this.accountDialog.show = true;
     },
     setActivePage(page = "market") {
       console.log(page);
@@ -92,6 +102,10 @@ export const useMarketStore = defineStore("marketStore", {
     transitToPage(pageName) {
       this.activePage = "loading";
       setTimeout(() => this.setActivePage(pageName), 100);
+    },
+
+    getAmountFormated(amount, unit = "USD") {
+      return formatCurrency(amount, unit);
     },
 
     // Update the UI configuration and apply it

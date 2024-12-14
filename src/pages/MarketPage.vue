@@ -909,13 +909,6 @@ export default defineComponent({
     allRelays() {
       return [...new Set(this.markets.map((m) => m.relays).flat())];
     },
-    processedEventIds() {
-      const stallsEventIds = this.stalls.map((s) => s.eventId);
-      const productsEventIds = this.products.map((p) => p.eventId);
-      // todo: DMs
-
-      return stallsEventIds.concat(productsEventIds);
-    },
     activeMarketRelaysData() {
       if (!this.activeMarket) return [];
       return Object.values(this.relaysData).filter(
@@ -937,7 +930,6 @@ export default defineComponent({
   async created() {
     this.bannerImage = this.defaultBanner;
     this.logoImage = this.defaultLogo;
-
 
     const params = new URLSearchParams(window.location.search);
 
@@ -1001,157 +993,6 @@ export default defineComponent({
       console.log("### handleFilterData", filterData);
       this.filterData = filterData;
       this.setActivePage("market");
-    },
-
-    /////////////////////////////////////////////////////////// PROCESS EVENTS ///////////////////////////////////////////////////////////
-
-    _processEvents(events, relayData) {
-      if (!events?.length) return;
-      console.log("### _processEvents", relayData.relayUrl, events);
-      const lastEventAt = events.sort((a, b) => b.created_at - a.created_at)[0]
-        .created_at;
-      relayData.lastEventAt = Math.max(lastEventAt, relayData.lastEventAt);
-
-      events = events
-        .filter((e) => !this.processedEventIds.includes(e.id))
-        .map((e) => ({ ...e, relayUrl: relayData.relayUrl }))
-        .map(eventToObj);
-
-      events.filter((e) => e.kind === 0).forEach(this._processProfileEvents);
-      events.filter((e) => e.kind === 4).forEach(this._processDmEvents);
-      events.filter((e) => e.kind === 5).forEach(this._processDeleteEvents);
-      events.filter((e) => e.kind === 30017).forEach(this._processStallEvents);
-      events
-        .filter((e) => e.kind === 30018)
-        .forEach(this._processProductEvents);
-
-      this.persistStallsAndProducts();
-      this.persistRelaysData();
-    },
-
-    _processProfileEvents(e) {
-      try {
-        this.profiles = this.profiles.filter((p) => p.pubkey !== e.pubkey);
-        this.profiles.push({ pubkey: e.pubkey, ...e.content });
-        this.$q.localStorage.set("nostrmarket.profiles", this.profiles);
-      } catch (error) {
-        console.warn(error);
-      }
-    },
-
-    _processStallEvents(e) {
-      this._processStall({
-        ...e.content,
-        id: e.d,
-        pubkey: e.pubkey,
-        createdAt: e.created_at,
-        eventId: e.id,
-        relayUrls: [e.relayUrl],
-      });
-    },
-
-    _processStall(stall) {
-      const stallIndex = this.stalls.findIndex(
-        (s) => s.id === stall.id && s.pubkey === stall.pubkey
-      );
-      if (stallIndex === -1) {
-        this.stalls.push(stall);
-        return;
-      }
-
-      const existingStall = this.stalls[stallIndex];
-
-      if (existingStall.createdAt < stall.createdAt) {
-        this.stalls.splice(stallIndex, 1, stall);
-        this.products
-          .filter((p) => p.pubkey === stall.pubkey && p.stall_id === stall.id)
-          .forEach((p) => (p.stallName = stall.name));
-      }
-    },
-
-    _processProductEvents(e) {
-      const p = { ...e.content };
-      const stall = this.stalls.find((s) => s.id == p.stall_id);
-
-      if (!stall) return;
-      if (p.currency != "sat") {
-        p.formatedPrice = this.getAmountFormated(p.price, p.currency);
-      }
-
-      this._processProduct({
-        ...p,
-        stallName: stall.name,
-        images: p.images || [p.image],
-        pubkey: e.pubkey,
-        id: e.d,
-        categories: e.t,
-        eventId: e.id,
-        createdAt: e.created_at,
-        relayUrls: [e.relayUrl],
-      });
-    },
-
-    _processProduct(product) {
-      const productIndex = this.products.findIndex(
-        (p) => p.id === product.id && p.pubkey === product.pubkey
-      );
-      if (productIndex === -1) {
-        this.products.push(product);
-        return;
-      }
-      const existingProduct = this.products[productIndex];
-      existingProduct.relayUrls = [
-        ...new Set(product.relayUrls.concat(existingProduct.relayUrls)),
-      ];
-      if (existingProduct.createdAt < product.createdAt) {
-        this.products.splice(productIndex, 1, product);
-      }
-    },
-
-    async _processDmEvents(e) {
-      if (!this.account?.pubkey) return;
-      const receiverPubkey = e.tags.find(
-        ([k, v]) => k === "p" && v && v !== ""
-      )[1];
-      const isSentByMe = e.pubkey === this.account.pubkey;
-      if (receiverPubkey !== this.account.pubkey && !isSentByMe) {
-        console.warn("Unexpected DM. Dropped!");
-        return;
-      }
-
-      const peerPubkey = isSentByMe ? receiverPubkey : e.pubkey;
-      e.content = await NostrTools.nip04.decrypt(
-        this.account.privkey,
-        peerPubkey,
-        e.content
-      );
-
-      this.persistDMEvent(e, peerPubkey);
-      if (isJson(e.content)) {
-        await this._handleStructuredDm(e, peerPubkey);
-      }
-    },
-
-    async _processDeleteEvents(e) {
-      const deletedEventIds = (e.tags || [])
-        .filter((t) => t[0] === "e")
-        .map((t) => t[1]);
-
-      const deletedStallsIds = this.stalls
-        .filter(
-          (s) => s.pubkey === e.pubkey && deletedEventIds.includes(s.eventId)
-        )
-        .map((s) => s.id);
-
-      const isDeletedProduct = (p) =>
-        p.pubkey === e.pubkey &&
-        (deletedEventIds.includes(p.eventId) ||
-          deletedStallsIds.includes(p.stall_id));
-      this.products = this.products.filter((p) => !isDeletedProduct(p));
-
-      const isDeletedStall = (s) =>
-        s.pubkey === e.pubkey && deletedEventIds.includes(s.eventId);
-      this.stalls = this.stalls.filter((s) => !isDeletedStall(s));
     },
 
     /////////////////////////////////////////////////////////// MARKET ///////////////////////////////////////////////////////////
@@ -1566,10 +1407,6 @@ export default defineComponent({
         });
       });
     },
-    getAmountFormated(amount, unit = "USD") {
-      return formatCurrency(amount, unit);
-    },
-
     setActivePage(page = "market") {
       this.activePage = page;
     },
@@ -1657,6 +1494,7 @@ import { useAccount } from "../composables/useAccount.js";
 import { useRelay } from "../composables/useRelay.js";
 import { useShoppingCart } from "../composables/useShoppingCart.js";
 import { useOrders } from "../composables/useOrders.js";
+import { useEvents } from "../composables/useEvents.js";
 
 const $q = useQuasar();
 window.$q = $q; // if necessary
@@ -1691,16 +1529,18 @@ const {
   checkoutStallCart,
 } = useShoppingCart();
 
-const {
-  placeOrder,
-} = useOrders();
+const { placeOrder } = useOrders();
 
 const {
-    restoreFromStorage,
-    persistStallsAndProducts,
-    persistRelaysData,
-    persistDMEvent,
-} = useStorage()
+  restoreFromStorage,
+  persistStallsAndProducts,
+  persistRelaysData,
+  persistDMEvent,
+} = useStorage();
+
+const {
+  processEvents,
+} = useEvents();
 
 restoreFromStorage();
 
