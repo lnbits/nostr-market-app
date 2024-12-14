@@ -938,7 +938,6 @@ export default defineComponent({
     this.bannerImage = this.defaultBanner;
     this.logoImage = this.defaultLogo;
 
-    this._restoreFromStorage();
 
     const params = new URLSearchParams(window.location.search);
 
@@ -1004,15 +1003,6 @@ export default defineComponent({
       this.setActivePage("market");
     },
 
-    async updateUiConfig(data = { opts: {} }) {
-      const { name, about, ui } = data.opts;
-      this.config = {
-        ...this.config,
-        opts: { ...this.config.opts, name, about, ui },
-      };
-      this._applyUiConfigs(this.config?.opts);
-    },
-
     /////////////////////////////////////////////////////////// PROCESS EVENTS ///////////////////////////////////////////////////////////
 
     _processEvents(events, relayData) {
@@ -1035,8 +1025,8 @@ export default defineComponent({
         .filter((e) => e.kind === 30018)
         .forEach(this._processProductEvents);
 
-      this._persistStallsAndProducts();
-      this._persistRelaysData();
+      this.persistStallsAndProducts();
+      this.persistRelaysData();
     },
 
     _processProfileEvents(e) {
@@ -1136,7 +1126,7 @@ export default defineComponent({
         e.content
       );
 
-      this._persistDMEvent(e, peerPubkey);
+      this.persistDMEvent(e, peerPubkey);
       if (isJson(e.content)) {
         await this._handleStructuredDm(e, peerPubkey);
       }
@@ -1288,8 +1278,8 @@ export default defineComponent({
         removedRelays?.forEach(this._handleRemovedRelay);
 
         // stalls and products can be removed when a market is updated
-        this._persistStallsAndProducts();
-        this._persistRelaysData();
+        this.persistStallsAndProducts();
+        this.persistRelaysData();
       } catch (error) {
         console.warn(error);
       } finally {
@@ -1317,8 +1307,8 @@ export default defineComponent({
         market.opts.merchants?.forEach(this._handleRemoveMerchant);
         market.relays?.forEach(this._handleRemovedRelay);
 
-        this._persistStallsAndProducts();
-        this._persistRelaysData();
+        this.persistStallsAndProducts();
+        this.persistRelaysData();
       } catch (error) {
         console.warn(error);
       } finally {
@@ -1408,7 +1398,7 @@ export default defineComponent({
     },
 
     async _handleNewRelay(relayUrl, market) {
-      const relayKey = await this._toRelayKey(relayUrl);
+      const relayKey = await this.toRelayKey(relayUrl);
       if (this.relaysData[relayKey]) {
         const relayData = this.relaysData[relayKey];
         const events = await relayData.relay.list([
@@ -1457,9 +1447,9 @@ export default defineComponent({
       );
       if (!marketWitRelay) {
         // relay no longer exists
-        const relayKey = await this._toRelayKey(relayUrl);
+        const relayKey = await this.toRelayKey(relayUrl);
         delete this.relaysData[relayKey];
-        this._persistRelaysData();
+        this.persistRelaysData();
       }
     },
 
@@ -1497,7 +1487,7 @@ export default defineComponent({
 
         await this._sendDmEvent(event);
         event.content = dm.message;
-        this._persistDMEvent(event, dm.to);
+        this.persistDMEvent(event, dm.to);
       } catch (error) {
         this.$q.notify({
           type: "warning",
@@ -1522,138 +1512,6 @@ export default defineComponent({
         .filter((key) => key.startsWith("nostrmarket.dm"));
 
       return dms.length === 0;
-    },
-
-    /////////////////////////////////////////////////////////// PERSIST ///////////////////////////////////////////////////////////
-
-    _restoreFromStorage() {
-      this.markets = this.$q.localStorage.getItem("nostrmarket.markets") || [];
-      this.allMarketsSelected = !this.markets.find((m) => !m.selected);
-
-      this.shoppingCarts =
-        this.$q.localStorage.getItem("nostrmarket.shoppingCarts") || [];
-
-      this.profiles =
-        this.$q.localStorage.getItem("nostrmarket.profiles") || [];
-
-      this.account =
-        this.$q.localStorage.getItem("nostrmarket.account") || null;
-
-      this.stalls = this.$q.localStorage.getItem("nostrmarket.stalls") || [];
-      this.products =
-        this.$q.localStorage.getItem("nostrmarket.products") || [];
-
-      const uiConfig = this.$q.localStorage.getItem(
-        "nostrmarket.marketplaceConfig"
-      ) || {
-        ui: { darkMode: false },
-      };
-
-      const sort = this.$q.localStorage.getItem("nostrmarket.sort") || {};
-      this.sort.by = sort.by || this.sort.by;
-      this.sort.order = sort.order || this.sort.order;
-
-      // trigger the `watch` logic
-      this.config = {
-        ...this.config,
-        opts: { ...this.config.opts, ...uiConfig },
-      };
-
-      this._applyUiConfigs(this.config.opts);
-
-      const prefix = "nostrmarket.orders.";
-      const orderKeys = this.$q.localStorage
-        .getAllKeys()
-        .filter((k) => k.startsWith(prefix));
-      orderKeys.forEach((k) => {
-        const pubkey = k.substring(prefix.length);
-        this.orders[pubkey] = this.$q.localStorage.getItem(k);
-      });
-
-      const readNotes =
-        this.$q.localStorage.getItem("nostrmarket.readNotes") || {};
-      this.readNotes = { ...this.readNotes, ...readNotes };
-    },
-    _persistStallsAndProducts() {
-      this.$q.localStorage.set("nostrmarket.stalls", this.stalls);
-      this.$q.localStorage.set("nostrmarket.products", this.products);
-    },
-
-    _persistRelaysData() {
-      this.$q.localStorage.set(
-        "nostrmarket.relays",
-        Object.values(this.relaysData)
-          .filter((r) => !!r)
-          .map((relayData) => ({
-            lastEventAt: relayData.lastEventAt,
-            relayUrl: relayData.relayUrl,
-          }))
-      );
-    },
-
-    _persistDMEvent(event, peerPubkey) {
-      const dms = this.$q.localStorage.getItem(
-        `nostrmarket.dm.${peerPubkey}`
-      ) || {
-        events: [],
-        lastCreatedAt: 0,
-      };
-      const existingEvent = dms.events.find((e) => e.id === event.id);
-      if (existingEvent) return;
-
-      dms.events.push(event);
-      dms.events.sort((a, b) => a.created_at - b.created_at);
-      dms.lastCreatedAt = dms.events[dms.events.length - 1].created_at;
-      dms.peerPubkey = peerPubkey;
-
-      this.$q.localStorage.set(`nostrmarket.dm.${peerPubkey}`, dms);
-
-      if (this.dmEvents?.peerPubkey === peerPubkey) {
-        this.dmEvents =
-          this.$q.localStorage.getItem(`nostrmarket.dm.${peerPubkey}`) || {};
-      } else {
-        // just to force refresh
-        this.dmEvents = { ...this.dmEvents };
-      }
-    },
-
-    _persistOrderUpdate(pubkey, eventCreatedAt, orderUpdate) {
-      let orders =
-        this.$q.localStorage.getItem(`nostrmarket.orders.${pubkey}`) || [];
-      const orderIndex = orders.findIndex((o) => o.id === orderUpdate.id);
-
-      if (orderIndex === -1) {
-        orders.unshift({
-          ...orderUpdate,
-          eventCreatedAt,
-          createdAt: eventCreatedAt,
-        });
-        this.orders[pubkey] = orders;
-        this.orders = { ...this.orders };
-        this.$q.localStorage.set(`nostrmarket.orders.${pubkey}`, orders);
-        return;
-      }
-
-      let order = orders[orderIndex];
-
-      if (orderUpdate.type === 0) {
-        order.createdAt = eventCreatedAt;
-        order = {
-          ...order,
-          ...orderUpdate,
-          message: order.message || orderUpdate.message,
-        };
-      } else {
-        order =
-          order.eventCreatedAt < eventCreatedAt
-            ? { ...order, ...orderUpdate }
-            : { ...orderUpdate, ...order };
-      }
-
-      orders.splice(orderIndex, 1, order);
-      this.orders[pubkey] = orders;
-      this.orders = { ...this.orders };
-      this.$q.localStorage.set(`nostrmarket.orders.${pubkey}`, orders);
     },
 
     /////////////////////////////////////////////////////////// MISC ///////////////////////////////////////////////////////////
@@ -1794,6 +1652,7 @@ export default defineComponent({
 <script setup>
 import { useQuasar } from "quasar";
 import { useMarketStore } from "../stores/marketStore";
+import { useStorage } from "../composables/useStorage.js";
 import { useAccount } from "../composables/useAccount.js";
 import { useRelay } from "../composables/useRelay.js";
 import { useShoppingCart } from "../composables/useShoppingCart.js";
@@ -1835,6 +1694,15 @@ const {
 const {
   placeOrder,
 } = useOrders();
+
+const {
+    restoreFromStorage,
+    persistStallsAndProducts,
+    persistRelaysData,
+    persistDMEvent,
+} = useStorage()
+
+restoreFromStorage();
 
 const init = async () => {
   try {

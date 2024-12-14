@@ -94,19 +94,6 @@ export const useMarketStore = defineStore("marketStore", {
       setTimeout(() => this.setActivePage(pageName), 100);
     },
 
-    applyUiConfigs(opts = {}) {
-      const { name, about, ui } = opts;
-      this.$q.localStorage.set("nostrmarket.marketplaceConfig", {
-        name,
-        about,
-        ui,
-      });
-      if (ui?.theme) {
-        document.body.setAttribute("data-theme", ui.theme);
-      }
-      this.$q.dark.set(!!ui?.darkMode);
-    },
-
     // Update the UI configuration and apply it
     async updateUiConfig(data = { opts: {} }) {
       const { name, about, ui } = data.opts;
