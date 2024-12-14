@@ -172,21 +172,6 @@ export const useMarketStore = defineStore("marketStore", {
 
       return dmKeys.map((k) => k.substring(prefix.length));
     },
-    allStallCatgories(stallId) {
-      const categories = this.products
-        .filter((p) => p.stall_id === stallId)
-        .map((p) => p.categories)
-        .flat()
-        .filter((c) => !!c);
-      return Array.from(new Set(categories));
-    },
-    allStallImages(stallId) {
-      const images = this.products
-        .filter((p) => p.stall_id === stallId)
-        .map((p) => p.images && p.images[0])
-        .filter((i) => !!i);
-      return Array.from(new Set(images));
-    },
     selectedMarketsMerchants: (state) => {
       return [
         ...new Set(
