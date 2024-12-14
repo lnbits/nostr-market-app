@@ -30,7 +30,7 @@ export function useMarket() {
 
       for (const relayUrl of market.relays) {
         // do not wait for relays
-        _handleeNewRelay(relayUrl, market);
+        _handleNewRelay(relayUrl, market);
       }
       if (navigateToConfig === true) {
         showMarketConfig(0);
@@ -88,7 +88,7 @@ export function useMarket() {
       $q.localStorage.set("nostrmarket.markets", marketStore.markets);
 
       for (const relayUrl of market.relays) {
-        await _handleeNewRelay(relayUrl, market);
+        await _handleNewRelay(relayUrl, market);
       }
     } catch (error) {
       console.warn(error);
@@ -125,14 +125,14 @@ export function useMarket() {
       marketStore.markets.unshift(market);
       $q.localStorage.set("nostrmarket.markets", marketStore.markets);
 
-      removedMerchants?.forEach(_handleeRemoveMerchant);
-      newMerchants?.forEach((m) => _handleeNewMerchant(market, m));
+      removedMerchants?.forEach(_handleRemoveMerchant);
+      newMerchants?.forEach((m) => _handleNewMerchant(market, m));
 
       console.log("### newRelays", newRelays);
       console.log("### removedRelays", removedRelays);
 
-      newRelays?.forEach((r) => _handleeNewRelay(r, market));
-      removedRelays?.forEach(_handleeRemovedRelay);
+      newRelays?.forEach((r) => _handleNewRelay(r, market));
+      removedRelays?.forEach(_handleRemovedRelay);
 
       // stalls and products can be removed when a market is updated
       storage.persistStallsAndProducts();
@@ -161,8 +161,8 @@ export function useMarket() {
         marketStore.navigateTo("market");
         storage.updateUiConfig(marketStore.markets[0]);
       }
-      market.opts.merchants?.forEach(_handleeRemoveMerchant);
-      market.relays?.forEach(_handleeRemovedRelay);
+      market.opts.merchants?.forEach(_handleRemoveMerchant);
+      market.relays?.forEach(_handleRemovedRelay);
 
       storage.persistStallsAndProducts();
       storage.persistRelaysData();
