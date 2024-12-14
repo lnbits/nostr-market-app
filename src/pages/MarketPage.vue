@@ -810,6 +810,7 @@ const {
   toggleAllMarkets,
   showMarketConfig,
   publishNaddr,
+  navigateTo,
   _handleNewMerchant,
   _handleNewRelay,
   _handleRemoveMerchant,
