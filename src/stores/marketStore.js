@@ -24,6 +24,7 @@ export const useMarketStore = defineStore("marketStore", {
     isLoading: false,
     showFilterDetails: false,
     searchText: null,
+    lastEvent: null,
     dmEvents: null,
     activeMarket: null,
     activeStall: null,

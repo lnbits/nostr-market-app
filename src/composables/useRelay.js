@@ -1,12 +1,10 @@
 import { useMarketStore } from "../stores/marketStore.js";
 import { useQuasar } from "quasar"
-import { useEvents } from "./useEvents";
-import { useDirectMessage } from "./useDirectMessage";
+import { useEventBus } from "./eventBus"
 
 export function useRelay() {
   const marketStore = useMarketStore();
-  const eventService = useEvents()
-  const messageService = useDirectMessage()
+  const eventBus = useEventBus()
   const $q = useQuasar()
 
   const startRelaysHealtCheck = () => {
@@ -115,7 +113,7 @@ export function useRelay() {
       },
     ];
     if (marketStore.account?.pubkey) {
-      const since = messageService._noDmEvents() ? 0 : relayData.lastEventAt + 1;
+      const since = 0;
 
       filters.push(
         {
@@ -142,18 +140,16 @@ export function useRelay() {
     console.log("### queryRelay.events", relayData.relayUrl, events);
 
     if (events?.length) {
-      // TODO:
-      await eventService.processEvents(events, relayData);
+      await eventBus.processEvents(events, relayData);
     }
 
     relayData.sub = relayData.relay.sub(filters);
     relayData.sub.on(
       "event",
       (event) => {
-        // TODO:
-        eventService.processEvents([event], relayData);
+        eventBus.processEvent(event, relayData);
       },
-      { id: "masterSub" } //pass ID to cancel previous sub
+      { id: "masterSub" }
     );
   };
 
