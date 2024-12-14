@@ -62,21 +62,6 @@ export function useStorage() {
       opts: { ...marketStore.config.opts, ...uiConfig },
     };
 
-    const applyUiConfigs = (opts = {}) => {
-      const { name, about, ui } = opts;
-      $q.localStorage.set("nostrmarket.marketplaceConfig", {
-        name,
-        about,
-        ui,
-      });
-      if (ui?.theme) {
-        document.body.setAttribute("data-theme", ui.theme);
-      }
-      $q.dark.set(!!ui?.darkMode);
-    }
-
-    applyUiConfigs(marketStore.config.opts);
-
     const prefix = "nostrmarket.orders.";
     const orderKeys = $q.localStorage
       .getAllKeys()
@@ -169,10 +154,24 @@ export function useStorage() {
     $q.localStorage.set(`nostrmarket.orders.${pubkey}`, orders);
   };
 
+  const applyUiConfigs = (opts = {}) => {
+    const { name, about, ui } = opts;
+    $q.localStorage.set("nostrmarket.marketplaceConfig", {
+      name,
+      about,
+      ui,
+    });
+    if (ui?.theme) {
+      document.body.setAttribute("data-theme", ui.theme);
+    }
+    $q.dark.set(!!ui?.darkMode);
+  };
+
   return {
     restoreFromStorage,
     persistStallsAndProducts,
     persistRelaysData,
     persistDMEvent,
+    applyUiConfigs,
   };
 }
