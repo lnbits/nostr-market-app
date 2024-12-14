@@ -50,15 +50,28 @@ export function useEvents() {
   }
 
   const processProductEvents = (e) => {
-    const p = { ...e.content }
-    const stall = marketStore.stalls.find((s) => s.id == p.stall_id)
+    let p;
+    try {
+      p = typeof e.content === 'string' ? JSON.parse(e.content) : e.content;
+      console.log("Parsed product:", p);
+    } catch (error) {
+      console.error('Failed to parse product event content:', error);
+      return;
+    }
 
-    if (!stall) return
+    const stall = marketStore.stalls.find((s) => s.id == p.stall_id)
+    console.log("Found stall:", stall);
+
+    if (!stall) {
+      console.log("No stall found for stall_id:", p.stall_id);
+      return;
+    }
+
     if (p.currency != "sat") {
       p.formatedPrice = marketStore.getAmountFormated(p.price, p.currency)
     }
 
-    processProduct({
+    const productToProcess = {
       ...p,
       stallName: stall.name,
       images: p.images || [p.image],
@@ -68,17 +81,27 @@ export function useEvents() {
       eventId: e.id,
       createdAt: e.created_at,
       relayUrls: [e.relayUrl],
-    })
+    };
+
+    console.log("Processing product:", productToProcess);
+    processProduct(productToProcess);
+    console.log("Current products array:", marketStore.products);
   }
 
   const processProduct = (product) => {
+    console.log("Finding product with id:", product.id, "and pubkey:", product.pubkey);
     const productIndex = marketStore.products.findIndex(
       (p) => p.id === product.id && p.pubkey === product.pubkey
     )
+    console.log("Product index:", productIndex);
+
     if (productIndex === -1) {
+      console.log("Adding new product");
       marketStore.products.push(product)
       return
     }
+
+    console.log("Updating existing product");
     const existingProduct = marketStore.products[productIndex]
     existingProduct.relayUrls = [
       ...new Set(product.relayUrls.concat(existingProduct.relayUrls)),
