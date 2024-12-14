@@ -16,7 +16,7 @@ export const useMarketStore = defineStore("marketStore", {
       activePage: "market",
       activeOrderId: null,
       allMarketsSelected: true,
-      groupByStall: false,
+      groupByStall: false, // check this
       bannerImage: null,
       logoImage: null,
       isLoading: false,
