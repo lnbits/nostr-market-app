@@ -976,18 +976,6 @@ export default defineComponent({
         }
       }
     },
-    _applyUiConfigs(opts = {}) {
-      const { name, about, ui } = opts;
-      this.$q.localStorage.set("nostrmarket.marketplaceConfig", {
-        name,
-        about,
-        ui,
-      });
-      if (ui?.theme) {
-        document.body.setAttribute("data-theme", ui.theme);
-      }
-      this.$q.dark.set(!!ui?.darkMode);
-    },
     handleFilterData(filterData) {
       console.log("### handleFilterData", filterData);
       this.filterData = filterData;
@@ -1188,8 +1176,8 @@ export default defineComponent({
 
 <script setup>
 import { useQuasar } from "quasar";
-import { useMarketStore } from "../stores/marketStore";
 import { useStorage } from "../composables/useStorage.js";
+import { useMarketStore } from "../stores/marketStore";
 import { useAccount } from "../composables/useAccount.js";
 import { useRelay } from "../composables/useRelay.js";
 import { useShoppingCart } from "../composables/useShoppingCart.js";
@@ -1201,6 +1189,13 @@ const $q = useQuasar();
 window.$q = $q; // if necessary
 
 const { store } = useMarketStore();
+
+const {
+  restoreFromStorage,
+  persistStallsAndProducts,
+  persistRelaysData,
+  persistDMEvent,
+} = useStorage();
 
 const {
   createMarket,
@@ -1247,13 +1242,6 @@ const {
 } = useShoppingCart();
 
 const { placeOrder } = useOrders();
-
-const {
-  restoreFromStorage,
-  persistStallsAndProducts,
-  persistRelaysData,
-  persistDMEvent,
-} = useStorage();
 
 const { processEvents } = useEvents();
 
