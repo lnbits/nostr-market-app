@@ -946,9 +946,6 @@ export default defineComponent({
     await this._handleQueryParams(params);
 
     this.isLoading = false;
-    this._loadRelaysData();
-
-    this._startRelaysHealtCheck();
   },
   methods: {
     async _handleQueryParams(params) {
@@ -1016,174 +1013,6 @@ export default defineComponent({
       this._applyUiConfigs(this.config?.opts);
     },
 
-    /////////////////////////////////////////////////////////// RELAYS ///////////////////////////////////////////////////////////
-
-    _startRelaysHealtCheck() {
-      setInterval(() => {
-        Object.keys(this.relaysData).forEach((k) => {
-          const relayData = this.relaysData[k];
-          if (relayData.relay.status === WebSocket.CLOSED) {
-            this._connectToRelay(k);
-          }
-        });
-      }, 30 * 1000);
-    },
-
-    async _toRelayKey(relayUrl) {
-      return "relay_" + (await hash(relayUrl));
-    },
-
-    async _loadRelaysData() {
-      for (const market of this.markets) {
-        for (const relayUrl of market.relays) {
-          await this._loadRelayData(relayUrl, market.opts.merchants);
-        }
-      }
-
-      Object.keys(this.relaysData).forEach(this._connectToRelay);
-    },
-
-    async _loadRelayData(relayUrl, merchants) {
-      const relayKey = await this._toRelayKey(relayUrl);
-      this.relaysData[relayKey] = this.relaysData[relayKey] || {
-        relayUrl,
-        connected: false,
-        error: null,
-        merchants: [],
-        lastEventAt: this.getLastEventDateForRelay(relayUrl),
-      };
-      const relayData = this.relaysData[relayKey];
-      relayData.merchants = [...new Set(relayData.merchants.concat(merchants))];
-    },
-
-    getLastEventDateForRelay(relayUrl) {
-      const relay = (
-        this.$q.localStorage.getItem("nostrmarket.relays") || []
-      ).find((r) => r.relayUrl === relayUrl);
-      console.log("### getLastEventForRelay", relayUrl, relay);
-      return relay?.lastEventAt || 0;
-    },
-
-    async _connectToRelay(relayKey) {
-      const relayData = this.relaysData[relayKey];
-      try {
-        console.log(`Trying to connect to relay ${relayData.relayUrl}`);
-        relayData.relay = NostrTools.relayInit(relayData.relayUrl);
-        relayData.relay.on("connect", () => {
-          relayData.connected = true;
-          relayData.error = null;
-          console.log(`Connected to relay ${relayData.relayUrl}`);
-          this._queryRelay(relayKey);
-        });
-        relayData.relay.on("error", (error) => {
-          console.warn(`Error by relay ${relayData.relayUrl}`);
-          relayData.connected = false;
-          relayData.error = error;
-        });
-        await relayData.relay.connect();
-      } catch (error) {
-        relayData.connected = false;
-        relayData.error = `${error}`;
-        console.warn(`Failed to connect to ${relayData.relayUrl}`);
-      }
-    },
-
-    async _requeryAllRelays() {
-      Object.keys(this.relaysData).forEach(async (relayKey) => {
-        await this._requeryRelay(relayKey);
-      });
-    },
-
-    async _requeryRelay(relayKey) {
-      const relayData = this.relaysData[relayKey];
-      if (relayData.connected) {
-        relayData.sub?.unsub();
-        this._queryRelay(relayKey);
-      }
-    },
-
-    _buildRelayFilters(relayData) {
-      const authors = relayData.merchants;
-      const filters = [
-        {
-          kinds: [30017, 30018],
-          authors,
-          since: relayData.lastEventAt + 1,
-        },
-      ];
-      if (this.account?.pubkey) {
-        const since = this._noDmEvents() ? 0 : relayData.lastEventAt + 1;
-
-        filters.push(
-          {
-            kinds: [4],
-            "#p": [this.account.pubkey],
-            since,
-          },
-          {
-            kinds: [4],
-            authors: [this.account.pubkey],
-            since,
-          }
-        );
-      }
-      return filters;
-    },
-
-    async _queryRelay(relayKey) {
-      const relayData = this.relaysData[relayKey];
-      const filters = this._buildRelayFilters(relayData);
-
-      const events = await relayData.relay.list(filters);
-      console.log("### _queryRelay.filters", relayData.relayUrl, filters);
-      console.log("### _queryRelay.events", relayData.relayUrl, events);
-
-      if (events?.length) {
-        await this._processEvents(events, relayData);
-      }
-
-      relayData.sub = relayData.relay.sub(filters);
-      relayData.sub.on(
-        "event",
-        (event) => {
-          this._processEvents([event], relayData);
-        },
-        { id: "masterSub" } //pass ID to cancel previous sub
-      );
-    },
-
-    async _publishEventToRelays(event, relayUrls) {
-      let count = 0;
-      for (const relayUrl of relayUrls) {
-        if (await this._publishEventToRelay(event, relayUrl)) {
-          count++;
-        }
-      }
-      return count;
-    },
-
-    async _publishEventToRelay(event, relayUrl) {
-      try {
-        const relayKey = await this._toRelayKey(relayUrl);
-        const relayData = this.relaysData[relayKey];
-        if (relayData?.connected) {
-          await relayData.relay.publish(event);
-        }
-        return true;
-      } catch (error) {
-        console.warn(error);
-        return false;
-      }
-    },
-
-    _findRelaysForMerchant(pubkey) {
-      const relaysForMerchant = this.markets
-        .filter((m) => m.opts.merchants.includes(pubkey))
-        .map((m) => m.relays)
-        .flat();
-
-      return [...new Set(relaysForMerchant)];
-    },
     /////////////////////////////////////////////////////////// PROCESS EVENTS ///////////////////////////////////////////////////////////
 
     _processEvents(events, relayData) {
@@ -1532,7 +1361,7 @@ export default defineComponent({
       try {
         event.sig = await NostrTools.signEvent(event, this.account.privkey);
 
-        const relayCount = await this._publishEventToRelays(
+        const relayCount = await this.publishEventToRelays(
           event,
           marketData.relays
         );
@@ -1574,7 +1403,7 @@ export default defineComponent({
         await this._processEvents(events, relayData);
 
         relayData.merchants.push(merchantPubkey);
-        await this._requeryRelay(relayKey);
+        await this.requeryRelay(relayKey);
       });
     },
 
@@ -1590,10 +1419,10 @@ export default defineComponent({
         relayData.merchants = [
           ...new Set(relayData.merchants.concat(market.opts.merchants)),
         ];
-        await this._requeryRelay(relayKey);
+        await this.requeryRelay(relayKey);
       } else {
-        await this._loadRelayData(relayUrl, market.opts.merchants);
-        await this._connectToRelay(relayKey);
+        await this.loadRelayData(relayUrl, market.opts.merchants);
+        await this.connectToRelay(relayKey);
       }
     },
     _handleRemoveMerchant(merchantPubkey) {
@@ -1617,7 +1446,7 @@ export default defineComponent({
           (m) => m !== merchantPubkey
         );
 
-        await this._requeryRelay(relayKey);
+        await this.requeryRelay(relayKey);
       });
     },
     async _handleRemovedRelay(relayUrl) {
@@ -1738,11 +1567,11 @@ export default defineComponent({
     async _sendDmEvent(event) {
       const toPubkey = event.tags.filter((t) => t[0] === "p").map((t) => t[1]);
 
-      let relays = this._findRelaysForMerchant(toPubkey[0]);
+      let relays = this.findRelaysForMerchant(toPubkey[0]);
       if (!relays?.length) {
         relays = [...defaultRelays];
       }
-      await this._publishEventToRelays(event, relays);
+      await this.publishEventToRelays(event, relays);
     },
 
     _noDmEvents() {
@@ -1793,8 +1622,8 @@ export default defineComponent({
         .filter((t) => t[0] === "p")
         .map((t) => t[1]);
 
-      const merchantRelays = this._findRelaysForMerchant(merchantPubkey[0]);
-      const relayCount = await this._publishEventToRelays(
+      const merchantRelays = this.findRelaysForMerchant(merchantPubkey[0]);
+      const relayCount = await this.publishEventToRelays(
         event,
         merchantRelays
       );
@@ -2143,6 +1972,12 @@ export default defineComponent({
 import { useQuasar } from "quasar";
 import { useMarketStore } from "../stores/marketStore";
 import { useAccount } from '../composables/useAccount.js'
+import { useRelay } from '../composables/useRelay.js'
+
+const $q = useQuasar();
+window.$q = $q // if necessary
+
+const { store } = useMarketStore();
 
 const {
   generateKeyPair,
@@ -2152,8 +1987,28 @@ const {
   clearAllData,
 } = useAccount()
 
-// TODO try removing window.$q and just assign $q
-window.$q = useQuasar();
+const {
+  startRelaysHealtCheck,
+  toRelayKey,
+  loadRelaysData,
+  loadRelayData,
+  connectToRelay,
+  requeryRelay,
+  buildRelayFilters,
+  queryRelay,
+  publishEventToRelays,
+  findRelaysForMerchant,
+} = useRelay()
 
-const { store } = useMarketStore();
+const init = async () => {
+  try {
+    await loadRelaysData();
+    startRelaysHealtCheck();
+  } catch (error) {
+    console.error('Failed to initialize:', error);
+  }
+}
+
+init();
+
 </script>
