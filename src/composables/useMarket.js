@@ -94,6 +94,7 @@ export function useMarket() {
 
       const market = {
         d: data.identifier,
+        naddr,
         pubkey: data.pubkey,
         relays: data.relays,
         selected: true,
