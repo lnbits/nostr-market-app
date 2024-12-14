@@ -673,168 +673,7 @@ export default defineComponent({
       }
     },
   },
-  computed: {
-    selectedMarketsMerchants() {
-      return [
-        ...new Set(
-          this.markets
-            .filter((m) => m.selected)
-            .map((m) => m.opts.merchants)
-            .flat()
-        ),
-      ];
-    },
-    filteredProducts() {
-      const isByMerchat = (pubkey) =>
-        !this.filterData.merchants?.length ||
-        this.filterData.merchants.includes(pubkey);
-      const isInMarket = (pubkey) =>
-        this.selectedMarketsMerchants.includes(pubkey);
-      const isInStall = (stallId) =>
-        !this.filterData.stalls?.length ||
-        this.filterData.stalls.includes(stallId);
-      const hasCurrency = (currency) =>
-        !this.filterData.currency ||
-        this.filterData.currency.toLowerCase() === currency.toLowerCase();
-      const hasPriceFrom = (price) =>
-        !this.filterData.priceFrom || price >= this.filterData.priceFrom;
-      const hasPriceTo = (price) =>
-        !this.filterData.priceTo || price <= this.filterData.priceTo;
-      const isInActiceStall = (stallId) =>
-        !this.activeStall || stallId == this.activeStall;
-
-      let products = this.products.filter(
-        (p) =>
-          this.hasCategory(p.categories) &&
-          isInActiceStall(p.stall_id) &&
-          isByMerchat(p.pubkey) &&
-          isInMarket(p.pubkey) &&
-          isInStall(p.stall_id) &&
-          hasCurrency(p.currency) &&
-          hasPriceFrom(p.price) &&
-          hasPriceTo(p.price)
-      );
-
-      products.sort((a, b) =>
-        productCompare(a, b, this.sort.by, this.sort.order)
-      );
-
-      if (!this.searchText || this.searchText.length < 2) return products;
-      const searchText = this.searchText.toLowerCase();
-      return products.filter(
-        (p) =>
-          p.name.toLowerCase().includes(searchText) ||
-          (p.description && p.description.toLowerCase().includes(searchText)) ||
-          (p.categories &&
-            p.categories.toString().toLowerCase().includes(searchText))
-      );
-    },
-    filterCount() {
-      let total = 0;
-      if (this.filterData.currency) total++;
-      if (this.filterData.priceFrom) total++;
-      if (this.filterData.priceTo) total++;
-      if (this.filterData.categories)
-        total += this.filterData.categories.length;
-      if (this.filterData.merchants) total += this.filterData.merchants.length;
-      if (this.filterData.stalls) total += this.filterData.stalls.length;
-
-      return total;
-    },
-    filterStalls() {
-      const stalls = this.stalls
-        .map((s) => ({
-          ...s,
-          categories: this.allStallCatgories(s.id),
-          images: this.allStallImages(s.id).slice(0, 8),
-          productCount: this.products.filter((p) => p.stall_id === s.id).length,
-        }))
-        .filter((p) => this.hasCategory(p.categories));
-
-      if (!this.searchText || this.searchText.length < 2) return stalls;
-
-      const searchText = this.searchText.toLowerCase();
-      return this.stalls.filter(
-        (s) =>
-          s.name.toLowerCase().includes(searchText) ||
-          (s.description && s.description.toLowerCase().includes(searchText)) ||
-          (s.categories &&
-            s.categories.toString().toLowerCase().includes(searchText))
-      );
-    },
-    marketsName() {
-      if (this.activeMarket) return this.activeMarket.opts?.name || "Market";
-      const selectedMarkets = this.markets.filter((m) => m.selected);
-      if (selectedMarkets.length === 0) return "No Market";
-      if (selectedMarkets.length === 1)
-        return selectedMarkets[0].opts?.name || "Market";
-      return selectedMarkets.length + " Markets";
-    },
-    stallName() {
-      return this.stalls.find((s) => s.id == this.activeStall)?.name || "Stall";
-    },
-    productName() {
-      return (
-        this.products.find((p) => p.id == this.activeProduct)?.name || "Product"
-      );
-    },
-    isValidAccountKey() {
-      return isValidKey(this.accountDialog.data.key);
-    },
-
-    allCartsItemCount() {
-      return this.shoppingCarts
-        .map((s) => s.products)
-        .flat()
-        .reduce((t, p) => t + p.orderedQuantity, 0);
-    },
-
-    allCategories() {
-      const categories = this.products
-        .map((p) => p.categories)
-        .flat()
-        .filter((c) => !!c)
-        .map((c) => c.toLowerCase());
-
-      const countedCategories = categories.reduce((all, c) => {
-        all[c] = (all[c] || 0) + 1;
-        return all;
-      }, {});
-      return Object.keys(countedCategories)
-        .map((category) => ({
-          category,
-          count: countedCategories[category],
-          selected: this.filterData.categories.indexOf(category) !== -1,
-        }))
-        .sort((a, b) => b.count - a.count);
-    },
-    allCurrencies() {
-      const currencies = this.products.map((p) => p.currency.toUpperCase());
-      return [...new Set(currencies)];
-    },
-    allMerchants() {
-      return [...new Set(this.markets.map((m) => m.opts.merchants).flat())];
-    },
-    allRelays() {
-      return [...new Set(this.markets.map((m) => m.relays).flat())];
-    },
-    activeMarketRelaysData() {
-      if (!this.activeMarket) return [];
-      return Object.values(this.relaysData).filter(
-        (r) => r && this.activeMarket.relays.includes(r.relayUrl)
-      );
-    },
-    dmPeers() {
-      // just to force refresh, do not remove
-      const temp = this.dmEvents;
-      const prefix = "nostrmarket.dm.";
-      const dmKeys = this.$q.localStorage
-        .getAllKeys()
-        .filter((k) => k.startsWith(prefix));
-
-      return dmKeys.map((k) => k.substring(prefix.length));
-    },
-  },
+  computed: {},
   methods: {
     async _handleQueryParams(params) {
       const merchantPubkey = params.get("merchant");
@@ -932,13 +771,6 @@ export default defineComponent({
         });
       });
     },
-    setActivePage(page = "market") {
-      this.activePage = page;
-    },
-    transitToPage(pageName) {
-      this.activePage = "loading";
-      setTimeout(() => this.setActivePage(pageName), 100);
-    },
 
     showInvoiceQr(invoice) {
       if (!invoice) return;
@@ -950,62 +782,9 @@ export default defineComponent({
         show: true,
       };
     },
-
-    toggleCategoryFilter(category) {
-      const index = this.filterData.categories.indexOf(category);
-      if (index === -1) {
-        this.filterData.categories.push(category);
-      } else {
-        this.filterData.categories.splice(index, 1);
-      }
-    },
-
-    hasCategory(categories = []) {
-      if (!this.filterData.categories?.length) return true;
-      for (const cat of categories) {
-        if (this.filterData.categories.indexOf(cat.toLowerCase()) !== -1)
-          return true;
-      }
-      return false;
-    },
-    allStallCatgories(stallId) {
-      const categories = this.products
-        .filter((p) => p.stall_id === stallId)
-        .map((p) => p.categories)
-        .flat()
-        .filter((c) => !!c);
-      return Array.from(new Set(categories));
-    },
-    allStallImages(stallId) {
-      const images = this.products
-        .filter((p) => p.stall_id === stallId)
-        .map((p) => p.images && p.images[0])
-        .filter((i) => !!i);
-      return Array.from(new Set(images));
-    },
-
-    sanitizeImageSrc(src, defaultValue) {
-      try {
-        if (src) {
-          new URL(src);
-          return src;
-        }
-      } catch {}
-      return defaultValue;
-    },
-
-    markNoteAsRead(noteId) {
-      this.readNotes[noteId] = true;
-      this.$q.localStorage.set("nostrmarket.readNotes", this.readNotes);
-    },
     focusOnElement(elementId) {
       document.getElementById(elementId)?.scrollIntoView();
       this.showFilterDetails = true;
-    },
-    sortProducts(by, order = "asc") {
-      this.sort.by = by;
-      this.sort.order = order;
-      this.$q.localStorage.set("nostrmarket.sort", { by, order });
     },
   },
 });
