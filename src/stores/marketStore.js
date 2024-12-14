@@ -80,6 +80,9 @@ export const useMarketStore = defineStore("marketStore", {
   }),
 
   actions: {
+    openAccountDialog() {
+      this.accountDialog.show = true
+    },
     setActivePage(page = "market") {
       console.log(page);
       this.activePage = page;
