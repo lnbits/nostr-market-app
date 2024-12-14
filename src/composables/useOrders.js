@@ -2,6 +2,7 @@ import { useQuasar } from 'quasar'
 import { useMarketStore } from '../stores/marketStore'
 import { useShoppingCart } from '../composables/useShoppingCart'
 import { useStorage } from '../composables/useStorage'
+import { useRelay } from '../composables/useRelay'
 import { useEventBus } from './eventBus'
 
 export function useOrders() {
@@ -10,6 +11,7 @@ export function useOrders() {
   const shoppingCart = useShoppingCart()
   const storage = useStorage()
   const eventBus = useEventBus()
+  const relayService = useRelay()
 
   const handleOrderEvent = async (event, { type, peerPubkey }) => {
     if (type !== 'dm') return
@@ -67,8 +69,8 @@ export function useOrders() {
       .filter((t) => t[0] === "p")
       .map((t) => t[1])
 
-    const merchantRelays = findRelaysForMerchant(merchantPubkey[0])
-    const relayCount = await publishEventToRelays(event, merchantRelays)
+    const merchantRelays = relayService.findRelaysForMerchant(merchantPubkey[0])
+    const relayCount = await relayService.publishEventToRelays(event, merchantRelays)
     $q.notify({
       type: relayCount ? "positive" : "warning",
       message: relayCount
