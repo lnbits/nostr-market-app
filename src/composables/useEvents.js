@@ -9,6 +9,9 @@ export function useEvents() {
   const storage = useStorage()
   const eventBus = useEventBus()
 
+  // Create a queue for products waiting for their stalls
+  let pendingProducts = [];
+
   const processProfileEvents = (e) => {
     try {
       marketStore.profiles = marketStore.profiles.filter((p) => p.pubkey !== e.pubkey)
@@ -23,7 +26,7 @@ export function useEvents() {
     let stall;
     try {
       stall = typeof e.content === 'string' ? JSON.parse(e.content) : e.content;
-      console.log("Processing stall:", stall); // Debug
+      console.log("Processing stall:", stall);
     } catch (error) {
       console.error('Failed to parse stall event content:', error);
       return;
@@ -32,7 +35,7 @@ export function useEvents() {
     const stallToProcess = {
       ...stall,
       pubkey: e.pubkey,
-      id: e.d || stall.id, // Make sure we capture the stall ID correctly
+      id: e.d || stall.id,
       eventId: e.id,
       createdAt: e.created_at,
       relayUrls: [e.relayUrl],
@@ -43,14 +46,31 @@ export function useEvents() {
     );
 
     if (stallIndex === -1) {
-      console.log("Adding new stall:", stallToProcess); // Debug
+      console.log("Adding new stall:", stallToProcess);
       marketStore.stalls.push(stallToProcess);
     } else {
-      console.log("Updating existing stall"); // Debug
+      console.log("Updating existing stall");
       const existingStall = marketStore.stalls[stallIndex];
       if (existingStall.createdAt < stallToProcess.createdAt) {
         marketStore.stalls.splice(stallIndex, 1, stallToProcess);
       }
+    }
+
+    // Process any pending products that were waiting for this stall
+    const productsForThisStall = pendingProducts.filter(
+      item => item.product.stall_id === stallToProcess.id
+    );
+
+    if (productsForThisStall.length > 0) {
+      console.log(`Processing ${productsForThisStall.length} pending products for stall ${stallToProcess.id}`);
+      productsForThisStall.forEach(item => {
+        processProductWithStall(item.product, item.event, stallToProcess);
+      });
+
+      // Remove processed products from pending queue
+      pendingProducts = pendingProducts.filter(
+        item => item.product.stall_id !== stallToProcess.id
+      );
     }
   }
 
@@ -64,34 +84,18 @@ export function useEvents() {
       return;
     }
 
-    console.log("All stalls:", marketStore.stalls);
-
-    // Debug each stall comparison
-    marketStore.stalls.forEach(s => {
-      console.log(`Comparing stall ID: "${s.id}" (${typeof s.id}) with "${p.stall_id}" (${typeof p.stall_id})`);
-      console.log('Length:', s.id.length, p.stall_id.length);
-      console.log('Equal?:', s.id === p.stall_id);
-      // Log the character codes to check for hidden characters
-      console.log('Char codes stall_id:', [...s.id].map(c => c.charCodeAt(0)));
-      console.log('Char codes product.stall_id:', [...p.stall_id].map(c => c.charCodeAt(0)));
-    });
-
-    const stall = marketStore.stalls.find((s) => {
-      // Try trimming both strings and comparing
-      return s.id.trim() === p.stall_id.trim();
-    });
+    const stall = marketStore.stalls.find(s => s.id === p.stall_id);
 
     if (!stall) {
-      console.log("No stall found for stall_id:", p.stall_id);
-      // Log the exact stall we're looking for to help debug
-      console.log("Searching for exact stall_id:", JSON.stringify(p.stall_id));
+      console.log("Queueing product waiting for stall:", p.stall_id);
+      pendingProducts.push({ product: p, event: e });
       return;
     }
 
-    if (p.currency != "sat") {
-      p.formatedPrice = marketStore.getAmountFormated(p.price, p.currency);
-    }
+    processProductWithStall(p, e, stall);
+  }
 
+  const processProductWithStall = (p, e, stall) => {
     const productToProcess = {
       ...p,
       stallName: stall.name,
