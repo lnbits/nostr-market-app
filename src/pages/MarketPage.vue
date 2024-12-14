@@ -628,98 +628,7 @@ export default defineComponent({
   name: "MarketPage",
   components: { MarketConfig },
   data: function () {
-    return {
-      account: null,
-      accountMetadata: null,
-      accountDialog: {
-        show: false,
-        data: {
-          watchOnly: false,
-          key: null,
-        },
-      },
-
-      relaysData: {},
-      markets: [],
-
-      shoppingCarts: [],
-      checkoutCart: null,
-      checkoutStall: null,
-
-      activePage: "market",
-      activeOrderId: null,
-      dmSubscriptions: {},
-      allMarketsSelected: false,
-
-      qrCodeDialog: {
-        data: {
-          payment_request: null,
-          message: null,
-        },
-        dismissMsg: null,
-        show: false,
-      },
-      naddrDialog: {
-        show: false,
-        publishedNaddr: "",
-      },
-
-      groupByStall: false,
-
-      relays: new Set(),
-
-      stalls: [],
-      products: [],
-      orders: {},
-      profiles: [],
-
-      bannerImage: null,
-      logoImage: null,
-      isLoading: false,
-
-      showFilterDetails: false,
-      searchText: null,
-      filterData: {
-        categories: [],
-        merchants: [],
-        stalls: [],
-        currency: null,
-        priceFrom: null,
-        priceTo: null,
-      },
-      sort: {
-        options: [
-          { field: "categories", label: "Categories" },
-          { field: "name", label: "Name" },
-          { field: "description", label: "Description" },
-          { field: "stallName", label: "Stall" },
-          { field: "price", label: "Price" },
-          { field: "currency", label: "Currency" },
-          { field: "createdAt", label: "Changed" },
-        ],
-        by: "name",
-        order: "asc",
-      },
-      dmEvents: null,
-
-      activeMarket: null,
-      activeStall: null,
-      activeProduct: null,
-
-      pool: null,
-      config: {
-        opts: null,
-      },
-
-      defaultBanner: this.$q.config.staticPath + "images/nostr-cover.png",
-      defaultLogo: this.$q.config.staticPath + "images/nostr-avatar.png",
-      defaultMarketNaddr:
-        "naddr1qqjr2e34v3jrzd3e95ensdfn956rywps94snwcmr95crvepexc6kxcfcxqmnvqg5waehxw309aex2mrp0yhxgctdw4eju6t0qyv8wumn8ghj7un9d3shjtnndehhyapwwdhkx6tpdsq36amnwvaz7tmwdaehgu3dwp6kytnhv4kxcmmjv3jhytnwv46qzxthwden5te0dehhxarj9eax2cn9v3jk2tnrd3hh2eqprfmhxue69uhhyetvv9ujummjv9hxwetsd9kxctnyv4mqzrthwden5te0dehhxtnvdakqz9rhwden5te0wfjkccte9ehx7um5wghxyecpzpmhxue69uhkummnw3ezuamfdejsz9thwden5te0v4jx2m3wdehhxarj9ekxzmnyqgstle9w09rt8y7xdlqs33v23vqvdtqx6j6j2wa4984g9n77tppx2tqrqsqqqa2ruusd5z",
-      readNotes: {
-        merchants: false,
-        marketUi: false,
-      },
-    };
+    return {};
   },
   watch: {
     config(n, _) {
@@ -926,17 +835,6 @@ export default defineComponent({
       return dmKeys.map((k) => k.substring(prefix.length));
     },
   },
-
-  async created() {
-    this.bannerImage = this.defaultBanner;
-    this.logoImage = this.defaultLogo;
-
-    const params = new URLSearchParams(window.location.search);
-
-    await this._handleQueryParams(params);
-
-    this.isLoading = false;
-  },
   methods: {
     async _handleQueryParams(params) {
       const merchantPubkey = params.get("merchant");
@@ -1114,6 +1012,7 @@ export default defineComponent({
 </script>
 
 <script setup>
+import { onMounted } from "vue";
 import { useQuasar } from "quasar";
 import { useStorage } from "../composables/useStorage.js";
 import { useMarketStore } from "../stores/marketStore";
@@ -1128,7 +1027,43 @@ import { useDirectMessage } from "../composables/useDirectMessage.js";
 const $q = useQuasar();
 window.$q = $q; // if necessary
 
-const { store } = useMarketStore();
+const {
+  account,
+  accountDialog,
+  market,
+  accountMetadata,
+  checkoutCart,
+  checkoutStall,
+  activePage,
+  activeOrderId,
+  allMarketsSelected,
+  groupByStall,
+  bannerImage,
+  logoImage,
+  isLoading,
+  showFilterDetails,
+  searchText,
+  dmEvents,
+  activeMarket,
+  activeStall,
+  activeProduct,
+  pool,
+  relays,
+  dmSubscriptions,
+  stalls,
+  products,
+  orders,
+  profiles,
+  relaysData,
+  shoppingCarts,
+  markets,
+  qrCodeDialog,
+  naddrDialog,
+  filterData,
+  sort,
+  config,
+  readNotes,
+} = useMarketStore();
 
 const {
   restoreFromStorage,
@@ -1183,23 +1118,32 @@ const {
 
 const { placeOrder } = useOrders();
 
-const { processEvents } = useEvents();
-
 const { handleDmChatSelected, sendDirectMessage } = useDirectMessage();
 
-const init = async () => {
+defineExpose({
+  qrCodeDialog,
+});
+
+const defaultBanner = this.$q.config.staticPath + "images/nostr-cover.png";
+const defaultLogo = this.$q.config.staticPath + "images/nostr-avatar.png";
+const defaultMarketNaddr =
+  "naddr1qqjr2e34v3jrzd3e95ensdfn956rywps94snwcmr95crvepexc6kxcfcxqmnvqg5waehxw309aex2mrp0yhxgctdw4eju6t0qyv8wumn8ghj7un9d3shjtnndehhyapwwdhkx6tpdsq36amnwvaz7tmwdaehgu3dwp6kytnhv4kxcmmjv3jhytnwv46qzxthwden5te0dehhxarj9eax2cn9v3jk2tnrd3hh2eqprfmhxue69uhhyetvv9ujummjv9hxwetsd9kxctnyv4mqzrthwden5te0dehhxtnvdakqz9rhwden5te0wfjkccte9ehx7um5wghxyecpzpmhxue69uhkummnw3ezuamfdejsz9thwden5te0v4jx2m3wdehhxarj9ekxzmnyqgstle9w09rt8y7xdlqs33v23vqvdtqx6j6j2wa4984g9n77tppx2tqrqsqqqa2ruusd5z";
+
+onMounted(async () => {
   try {
+    bannerImage = defaultBanner;
+    logoImage = defaultLogo;
     restoreFromStorage();
 
     const params = new URLSearchParams(window.location.search);
     await addMarket(params.get("naddr"));
+    await _handleQueryParams(params);
 
+    isLoading = false;
     await loadRelaysData();
     startRelaysHealtCheck();
   } catch (error) {
     console.error("Failed to initialize:", error);
   }
-};
-
-init();
+});
 </script>
