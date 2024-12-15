@@ -347,7 +347,7 @@ export default defineComponent({
             picture: null,
             banner: null,
             theme: null,
-            darkMode: false,
+            darkMode: true,
           },
         },
       },
