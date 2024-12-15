@@ -630,49 +630,7 @@ export default defineComponent({
   data: function () {
     return {};
   },
-  watch: {
-    config(n, _) {
-      if (!n?.opts?.ui?.banner) {
-        this.bannerImage = this.defaultBanner;
-      } else {
-        this.bannerImage = null;
-        setTimeout(() => {
-          (this.bannerImage = this.sanitizeImageSrc(
-            n?.opts?.ui?.banner,
-            this.defaultBanner
-          )),
-            1;
-        });
-      }
-      if (!n?.opts?.ui?.picture) {
-        this.logoImage = this.defaultLogo;
-      } else {
-        this.logoImage = null;
-        setTimeout(() => {
-          (this.logoImage = this.sanitizeImageSrc(
-            n?.opts?.ui?.picture,
-            this.defaultLogo
-          )),
-            1;
-        });
-      }
-    },
-    searchText(n, o) {
-      if (!n) return;
-      if (n.toLowerCase().startsWith("naddr")) {
-        try {
-          const { type, data } = NostrTools.nip19.decode(n);
-          if (type !== "naddr" || data.kind !== 30019) return;
-          this.$q
-            .dialog(confirm("Do you want to import this market profile?"))
-            .onOk(async () => {
-              this.searchText = "";
-              await this.addMarket(n);
-            });
-        } catch {}
-      }
-    },
-  },
+  watch: {},
   computed: {},
   methods: {
     handleFilterData(filterData) {
@@ -709,7 +667,7 @@ export default defineComponent({
 </script>
 
 <script setup>
-import { onMounted } from "vue";
+import { onMounted, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useQuasar } from "quasar";
 import { useStorage } from "../composables/useStorage.js";
@@ -862,6 +820,84 @@ const { placeOrder } = useOrders();
 
 const { handleDmChatSelected, sendDirectMessage } = useDirectMessage();
 
+const defaultBanner = $q.config.staticPath + "images/nostr-cover.png";
+const defaultLogo = $q.config.staticPath + "images/nostr-avatar.png";
+const defaultMarketNaddr =
+  "naddr1qqjrzerxxu6xxdm994nxyc3s956xzdpc95ukyv3n94nxydrzvgunjcn9x56rwqgkwaehxw309ahx7um5wghxzarfw3kxzm3wd9hsz9nhwden5te0wfjkccte9eshg6t5d3skutnfdupzqz2527ue2pt5ttxukc3juz8m6x6kkha3lymcq5c6ugz7f48grs9pqvzqqqr4gvz5v3j7";
+
+onMounted(async () => {
+  try {
+    marketStore.pool = new NostrTools.SimplePool();
+    bannerImage.value = defaultBanner;
+    logoImage.value = defaultLogo;
+    restoreFromStorage();
+
+    const params = new URLSearchParams(window.location.search);
+    await addMarket(params.get("naddr"));
+    await _handleQueryParams(params);
+
+    isLoading.value = false;
+    await loadRelaysData();
+    startRelaysHealtCheck();
+  } catch (error) {
+    console.error("Failed to initialize:", error);
+  }
+});
+
+watch(
+  () => config,
+  (n, _) => {
+    if (!n?.opts?.ui?.banner) {
+      bannerImage.value = defaultBanner.value;
+    } else {
+      bannerImage.value = null;
+      setTimeout(() => {
+        bannerImage.value = sanitizeImageSrc(
+          n?.opts?.ui?.banner,
+          defaultBanner.value
+        );
+      }, 1);
+    }
+
+    if (!n?.opts?.ui?.picture) {
+      logoImage.value = defaultLogo.value;
+    } else {
+      logoImage.value = null;
+      setTimeout(() => {
+        logoImage.value = sanitizeImageSrc(
+          n?.opts?.ui?.picture,
+          defaultLogo.value
+        );
+      }, 1);
+    }
+  }
+);
+
+watch(
+  () => searchText.value,
+  async (n, o) => {
+    if (!n) return;
+    if (n.toLowerCase().startsWith('naddr')) {
+      try {
+        const { type, data } = NostrTools.nip19.decode(n);
+        if (type !== 'naddr' || data.kind !== 30019) return;
+
+        $q.dialog({
+          title: 'Confirmation',
+          message: 'Do you want to import this market profile?',
+          ok: 'Yes',
+          cancel: 'No',
+        }).onOk(async () => {
+          searchText.value = '';
+          await addMarket(n);
+        });
+      } catch (error) {
+        console.error('Error decoding naddr:', error);
+      }
+    }
+  }
+);
+
 const _handleQueryParams = async (params) => {
   const merchantPubkey = params.get("merchant");
   console.log("### merchantPubkey", merchantPubkey);
@@ -904,27 +940,4 @@ const handleFilterData = (filterData) => {
   this.setActivePage("market");
 };
 
-const defaultBanner = $q.config.staticPath + "images/nostr-cover.png";
-const defaultLogo = $q.config.staticPath + "images/nostr-avatar.png";
-const defaultMarketNaddr =
-  "naddr1qqjr2e34v3jrzd3e95ensdfn956rywps94snwcmr95crvepexc6kxcfcxqmnvqg5waehxw309aex2mrp0yhxgctdw4eju6t0qyv8wumn8ghj7un9d3shjtnndehhyapwwdhkx6tpdsq36amnwvaz7tmwdaehgu3dwp6kytnhv4kxcmmjv3jhytnwv46qzxthwden5te0dehhxarj9eax2cn9v3jk2tnrd3hh2eqprfmhxue69uhhyetvv9ujummjv9hxwetsd9kxctnyv4mqzrthwden5te0dehhxtnvdakqz9rhwden5te0wfjkccte9ehx7um5wghxyecpzpmhxue69uhkummnw3ezuamfdejsz9thwden5te0v4jx2m3wdehhxarj9ekxzmnyqgstle9w09rt8y7xdlqs33v23vqvdtqx6j6j2wa4984g9n77tppx2tqrqsqqqa2ruusd5z";
-
-onMounted(async () => {
-  try {
-    marketStore.pool = new NostrTools.SimplePool();
-    bannerImage.value = defaultBanner;
-    logoImage.value = defaultLogo;
-    restoreFromStorage();
-
-    const params = new URLSearchParams(window.location.search);
-    await addMarket(params.get("naddr"));
-    await _handleQueryParams(params);
-
-    isLoading.value = false;
-    await loadRelaysData();
-    startRelaysHealtCheck();
-  } catch (error) {
-    console.error("Failed to initialize:", error);
-  }
-});
 </script>
