@@ -26,7 +26,7 @@ export function useStorage() {
     const uiConfig = $q.localStorage.getItem(
       "nostrmarket.marketplaceConfig"
     ) || {
-      ui: { darkMode: false },
+      ui: { darkMode: true },
     };
 
     if (!marketStore.sort) {
