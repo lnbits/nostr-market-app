@@ -785,6 +785,22 @@ const {
   filterStalls,
 } = storeToRefs(marketStore);
 
+const {
+    markNoteAsRead,
+    sanitizeImageSrc,
+    toggleCategoryFilter,
+    openAccountDialog,
+    setActivePage,
+    transitToPage,
+    getAmountFormated,
+    // Update the UI configuration and apply it
+    updateUiConfig,
+    // Ensure these actions are defined somewhere in the store
+    hasCategory,
+    allStallCatgories,
+    allStallImages,
+} = useMarketStore();
+
 // Note: The following "getters" are defined as functions with arguments:
 //   allStallCatgories(stallId)
 //   allStallImages(stallId)
@@ -820,7 +836,6 @@ const {
 
 const {
   generateKeyPair,
-  openAccountDialog,
   createAccount,
   logout,
   clearAllData,
