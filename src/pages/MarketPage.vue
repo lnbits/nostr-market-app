@@ -787,6 +787,7 @@ const {
 
 const {
     markNoteAsRead,
+    focusOnElement,
     sanitizeImageSrc,
     toggleCategoryFilter,
     openAccountDialog,
@@ -907,14 +908,6 @@ const handleFilterData = (filterData) => {
   this.setActivePage("market");
 };
 
-const focusOnElement = (elementId) => {
-  // Scroll the element into view
-  const element = document.getElementById(elementId);
-  if (element) {
-    element.scrollIntoView();
-    this.showFilterDetails = true;
-  }
-};
 
 const defaultBanner = $q.config.staticPath + "images/nostr-cover.png";
 const defaultLogo = $q.config.staticPath + "images/nostr-avatar.png";

@@ -277,6 +277,10 @@ export const useMarketStore = defineStore("marketStore", {
       this.readNotes[noteId] = true;
       this.$q.localStorage.set("nostrmarket.readNotes", this.readNotes);
     },
+    focusOnElement(elementId) {
+      document.getElementById(elementId)?.scrollIntoView();
+      this.showFilterDetails = true;
+    },
     sortProducts(by, order = "asc") {
       this.sort.by = by;
       this.sort.order = order;
