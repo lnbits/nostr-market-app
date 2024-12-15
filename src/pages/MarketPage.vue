@@ -786,20 +786,21 @@ const {
 } = storeToRefs(marketStore);
 
 const {
-    markNoteAsRead,
-    focusOnElement,
-    sanitizeImageSrc,
-    toggleCategoryFilter,
-    openAccountDialog,
-    setActivePage,
-    transitToPage,
-    getAmountFormated,
-    // Update the UI configuration and apply it
-    updateUiConfig,
-    // Ensure these actions are defined somewhere in the store
-    hasCategory,
-    allStallCatgories,
-    allStallImages,
+  markNoteAsRead,
+  focusOnElement,
+  sanitizeImageSrc,
+  sortProducts,
+  toggleCategoryFilter,
+  openAccountDialog,
+  setActivePage,
+  transitToPage,
+  getAmountFormated,
+  // Update the UI configuration and apply it
+  updateUiConfig,
+  // Ensure these actions are defined somewhere in the store
+  hasCategory,
+  allStallCatgories,
+  allStallImages,
 } = useMarketStore();
 
 // Note: The following "getters" are defined as functions with arguments:
@@ -835,12 +836,7 @@ const {
   _handleRemovedRelay,
 } = useMarket();
 
-const {
-  generateKeyPair,
-  createAccount,
-  logout,
-  clearAllData,
-} = useAccount();
+const { generateKeyPair, createAccount, logout, clearAllData } = useAccount();
 
 const {
   startRelaysHealtCheck,
@@ -907,7 +903,6 @@ const handleFilterData = (filterData) => {
   this.filterData = filterData;
   this.setActivePage("market");
 };
-
 
 const defaultBanner = $q.config.staticPath + "images/nostr-cover.png";
 const defaultLogo = $q.config.staticPath + "images/nostr-avatar.png";
