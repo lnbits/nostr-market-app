@@ -317,6 +317,19 @@ export const useMarketStore = defineStore("marketStore", {
       return formatCurrency(amount, unit);
     },
 
+    applyUiConfigs(opts = {}) {
+      const { name, about, ui } = opts;
+      this.qInstance.localStorage.set("nostrmarket.marketplaceConfig", {
+        name,
+        about,
+        ui,
+      });
+      if (ui?.theme) {
+        document.body.setAttribute("data-theme", ui.theme);
+      }
+      this.qInstance.dark.set(!!ui?.darkMode);
+    },
+
     // Update the UI configuration and apply it
     async updateUiConfig(data = { opts: {} }) {
       const { name, about, ui } = data.opts;

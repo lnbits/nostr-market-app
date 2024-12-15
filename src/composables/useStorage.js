@@ -154,25 +154,11 @@ export function useStorage() {
     $q.localStorage.set(`nostrmarket.orders.${pubkey}`, orders);
   };
 
-  const applyUiConfigs = (opts = {}) => {
-    const { name, about, ui } = opts;
-    $q.localStorage.set("nostrmarket.marketplaceConfig", {
-      name,
-      about,
-      ui,
-    });
-    if (ui?.theme) {
-      document.body.setAttribute("data-theme", ui.theme);
-    }
-    $q.dark.set(!!ui?.darkMode);
-  };
-
   return {
     restoreFromStorage,
     persistStallsAndProducts,
     persistOrderUpdate,
     persistRelaysData,
     persistDMEvent,
-    applyUiConfigs,
   };
 }
