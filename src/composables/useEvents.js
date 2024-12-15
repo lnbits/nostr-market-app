@@ -1,6 +1,7 @@
 import { useQuasar } from 'quasar'
 import { useMarketStore } from '../stores/marketStore'
 import { useStorage } from './useStorage'
+import { handleOrderStatusUpdate } from './useOrders'
 import { useEventBus } from './eventBus'
 
 export function useEvents() {
@@ -134,6 +135,50 @@ export function useEvents() {
     }
   }
 
+  const handlePaymentRequest = (json) => {
+    console.warn("inside handle payment request")
+    console.log(json)
+    if (json.id && json.id !== marketStore.activeOrderId) {
+      console.log('woof')
+      return
+    }
+    if (!json.paymentoptions?.length) {
+      console.log('meow')
+      marketStore.qrCodeDialog.data.message = json.message || "Unexpected error"
+      return
+    }
+
+    console.log('moo')
+    console.log(json.paymentoptions)
+    const paymentRequest = json.paymentoptions.find(
+      (o) => o.type == "ln"
+    ).link
+    if (!paymentRequest) return
+    marketStore.qrCodeDialog.data.paymentrequest = paymentRequest
+    marketStore.qrCodeDialog.dismissMsg = $q.notify({
+      timeout: 10000,
+      message: "Waiting for payment...",
+    })
+  }
+
+  const handleStructuredDm = async (event, peerPubkey) => {
+    console.log("inside handlestructuredm")
+    console.log(event, peerPubkey)
+    try {
+      const jsonData = JSON.parse(event.content);
+      if ([0, 1, 2].indexOf(jsonData.type) !== -1) {
+        storage.persistOrderUpdate(peerPubkey, event.created_at, jsonData);
+      }
+      if (jsonData.type === 1) {
+        handlePaymentRequest(jsonData);
+      } else if (jsonData.type === 2) {
+        handleOrderStatusUpdate(jsonData);
+      }
+    } catch (e) {
+      console.warn("Unable to handle incomming DM", e);
+    }
+  }
+
   const processDmEvents = async (e) => {
     if (!marketStore.account?.pubkey) return
     const receiverPubkey = e.tags.find(
@@ -155,7 +200,9 @@ export function useEvents() {
     storage.persistDMEvent(e, peerPubkey)
 
     if (isJson(e.content)) {
-      eventBus.processEvent(e, { type: 'dm', peerPubkey })
+      console.warn("inside persistDMEvent")
+      await handleStructuredDm(e, peerPubkey);
+      // eventBus.processEvent(e, { type: 'dm', peerPubkey })
     }
   }
 

@@ -4,32 +4,36 @@ import { useShoppingCart } from '../composables/useShoppingCart'
 import { useStorage } from '../composables/useStorage'
 import { useRelay } from '../composables/useRelay'
 import { useEventBus } from './eventBus'
+import { useEvents } from '../composables/useEvents'
+
+const marketStore = useMarketStore()
+
+export function handleOrderStatusUpdate(jsonData) {
+  if (jsonData.id && jsonData.id !== marketStore.activeOrderId) {
+    return
+  }
+  if (marketStore.qrCodeDialog.dismissMsg) {
+    marketStore.qrCodeDialog.dismissMsg()
+  }
+  marketStore.qrCodeDialog.show = false
+  const message = jsonData.shipped
+    ? "Order shipped"
+    : jsonData.paid
+      ? "Order paid"
+      : "Order notification"
+  $q.notify({
+    type: "positive",
+    message: message,
+    caption: jsonData.message || "",
+  })
+}
 
 export function useOrders() {
   const $q = useQuasar()
-  const marketStore = useMarketStore()
   const shoppingCart = useShoppingCart()
   const storage = useStorage()
   const eventBus = useEventBus()
   const relayService = useRelay()
-
-  const handleOrderEvent = async (event, { type, peerPubkey }) => {
-    if (type !== 'dm') return
-
-    try {
-      const jsonData = JSON.parse(event.content)
-      if ([0, 1, 2].indexOf(jsonData.type) !== -1) {
-        storage.persistOrderUpdate(peerPubkey, event.createdat, jsonData)
-      }
-      if (jsonData.type === 1) {
-        handlePaymentRequest(jsonData)
-      } else if (jsonData.type === 2) {
-        handleOrderStatusUpdate(jsonData)
-      }
-    } catch (e) {
-      console.warn("Unable to handle incoming order event", e)
-    }
-  }
 
   const placeOrder = async ({ event, order, cartId }) => {
     if (!marketStore.account?.privkey) {
@@ -87,44 +91,26 @@ export function useOrders() {
     }
   }
 
-  const handlePaymentRequest = (json) => {
-    if (json.id && json.id !== marketStore.activeOrderId) {
-      return
-    }
-    if (!json.paymentoptions?.length) {
-      marketStore.qrCodeDialog.data.message = json.message || "Unexpected error"
-      return
-    }
+  const handleOrderEvent = async (event, { type, peerPubkey }) => {
+    console.warn("inside handleOrderEvent")
+    if (type !== 'dm') return
 
-    const paymentRequest = json.paymentoptions.find(
-      (o) => o.type == "ln"
-    ).link
-    if (!paymentRequest) return
-    marketStore.qrCodeDialog.data.paymentrequest = paymentRequest
-    marketStore.qrCodeDialog.dismissMsg = $q.notify({
-      timeout: 10000,
-      message: "Waiting for payment...",
-    })
-  }
-
-  const handleOrderStatusUpdate = (jsonData) => {
-    if (jsonData.id && jsonData.id !== marketStore.activeOrderId) {
-      return
+    try {
+      const jsonData = JSON.parse(event.content)
+      if ([0, 1, 2].indexOf(jsonData.type) !== -1) {
+        storage.persistOrderUpdate(peerPubkey, event.createdat, jsonData)
+      }
+      console.log(jsonData)
+      if (jsonData.type === 1) {
+        console.warn("type 1")
+        handlePaymentRequest(jsonData)
+      } else if (jsonData.type === 2) {
+        console.warn("type 2")
+        handleOrderStatusUpdate(jsonData)
+      }
+    } catch (e) {
+      console.warn("Unable to handle incoming order event", e)
     }
-    if (marketStore.qrCodeDialog.dismissMsg) {
-      marketStore.qrCodeDialog.dismissMsg()
-    }
-    marketStore.qrCodeDialog.show = false
-    const message = jsonData.shipped
-      ? "Order shipped"
-      : jsonData.paid
-        ? "Order paid"
-        : "Order notification"
-    $q.notify({
-      type: "positive",
-      message: message,
-      caption: jsonData.message || "",
-    })
   }
 
   // Register order event handler
@@ -132,7 +118,5 @@ export function useOrders() {
 
   return {
     placeOrder,
-    handlePaymentRequest,
-    handleOrderStatusUpdate
   }
 }
