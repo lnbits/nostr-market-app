@@ -103,18 +103,28 @@ export function useRelay() {
     }
   };
 
-  const buildRelayFilters = (relayData) => {
+  const buildRelayFilters = (relayData, phase = 'all') => {
     const authors = relayData.merchants;
-    const filters = [
-      {
-        kinds: [30017, 30018],
+    const filters = [];
+
+    if (phase === 'all' || phase === 'stalls') {
+      filters.push({
+        kinds: [30017],
         authors,
         since: relayData.lastEventAt + 1,
-      },
-    ];
+      });
+    }
+
+    if (phase === 'all' || phase === 'products') {
+      filters.push({
+        kinds: [30018],
+        authors,
+        since: relayData.lastEventAt + 1,
+      });
+    }
+
     if (marketStore.account?.pubkey) {
       const since = 0;
-
       filters.push(
         {
           kinds: [4],
@@ -128,22 +138,27 @@ export function useRelay() {
         }
       );
     }
+
     return filters;
   };
 
   const queryRelay = async (relayKey) => {
     const relayData = marketStore.relaysData[relayKey];
-    const filters = buildRelayFilters(relayData);
 
-    const events = await relayData.relay.list(filters);
-    console.log("### queryRelay.filters", relayData.relayUrl, filters);
-    console.log("### queryRelay.events", relayData.relayUrl, events);
-
-    if (events?.length) {
-      await eventBus.processEvents(events, relayData);
+    const stallFilters = buildRelayFilters(relayData, 'stalls');
+    const stallEvents = await relayData.relay.list(stallFilters);
+    if (stallEvents?.length) {
+      await eventBus.processEvents(stallEvents, relayData);
     }
 
-    relayData.sub = relayData.relay.sub(filters);
+    const productFilters = buildRelayFilters(relayData, 'products');
+    const productEvents = await relayData.relay.list(productFilters);
+    if (productEvents?.length) {
+      await eventBus.processEvents(productEvents, relayData);
+    }
+
+    const allFilters = buildRelayFilters(relayData, 'all');
+    relayData.sub = relayData.relay.sub(allFilters);
     relayData.sub.on(
       "event",
       (event) => {
