@@ -275,7 +275,7 @@ export const useMarketStore = defineStore("marketStore", {
   actions: {
     markNoteAsRead(noteId) {
       this.readNotes[noteId] = true;
-      this.$q.localStorage.set("nostrmarket.readNotes", this.readNotes);
+      this.qInstance.localStorage.set("nostrmarket.readNotes", this.readNotes);
     },
     focusOnElement(elementId) {
       document.getElementById(elementId)?.scrollIntoView();
@@ -284,7 +284,7 @@ export const useMarketStore = defineStore("marketStore", {
     sortProducts(by, order = "asc") {
       this.sort.by = by;
       this.sort.order = order;
-      this.$q.localStorage.set("nostrmarket.sort", { by, order });
+      this.qInstance.localStorage.set("nostrmarket.sort", { by, order });
     },
     sanitizeImageSrc(src, defaultValue) {
       try {
@@ -292,7 +292,7 @@ export const useMarketStore = defineStore("marketStore", {
           new URL(src);
           return src;
         }
-      } catch { }
+      } catch {}
       return defaultValue;
     },
     toggleCategoryFilter(category) {
@@ -337,11 +337,11 @@ export const useMarketStore = defineStore("marketStore", {
     // Update the UI configuration and apply it
     async updateUiConfig(data = { opts: {} }) {
       const { name, about, ui } = data.opts;
-      this.marketState.config = {
-        ...this.marketState.config,
-        opts: { ...this.marketState.config.opts, name, about, ui },
+      this.config = {
+        ...this.config,
+        opts: { ...this.config.opts, name, about, ui },
       };
-      this.applyUiConfigs(this.marketState.config?.opts);
+      this.applyUiConfigs(this.config?.opts);
     },
     // Ensure these actions are defined somewhere in the store
     hasCategory(categories = []) {
