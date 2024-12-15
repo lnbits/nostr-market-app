@@ -317,7 +317,7 @@ export const useMarketStore = defineStore("marketStore", {
       setTimeout(() => this.setActivePage(pageName), 100);
     },
 
-    getAmountFormated(amount, unit = "USD") {
+    getAmountFormatted(amount, unit = "USD") {
       return formatCurrency(amount, unit);
     },
 

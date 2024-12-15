@@ -794,7 +794,7 @@ const {
   openAccountDialog,
   setActivePage,
   transitToPage,
-  getAmountFormated,
+  getAmountFormatted,
   // Update the UI configuration and apply it
   updateUiConfig,
   // Ensure these actions are defined somewhere in the store
