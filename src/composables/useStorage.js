@@ -101,8 +101,8 @@ export function useStorage() {
     if (existingEvent) return;
 
     dms.events.push(event);
-    dms.events.sort((a, b) => a.createdat - b.createdat);
-    dms.lastCreatedAt = dms.events[dms.events.length - 1].createdat;
+    dms.events.sort((a, b) => a.created_at - b.created_at);
+    dms.lastCreatedAt = dms.events[dms.events.length - 1].created_at;
     dms.peerPubkey = peerPubkey;
 
     $q.localStorage.set(`nostrmarket.dm.${peerPubkey}`, dms);

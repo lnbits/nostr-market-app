@@ -54,7 +54,7 @@ export function useOrders() {
       await sendOrderEvent(event)
       storage.persistOrderUpdate(
         marketStore.checkoutStall.pubkey,
-        event.createdat,
+        event.created_at,
         order
       )
       shoppingCart.removeCart(cartId)
@@ -83,7 +83,7 @@ export function useOrders() {
     })
     marketStore.qrCodeDialog = {
       data: {
-        paymentrequest: null,
+        payment_request: null,
         message: null,
       },
       dismissMsg: null,
@@ -98,7 +98,7 @@ export function useOrders() {
     try {
       const jsonData = JSON.parse(event.content)
       if ([0, 1, 2].indexOf(jsonData.type) !== -1) {
-        storage.persistOrderUpdate(peerPubkey, event.createdat, jsonData)
+        storage.persistOrderUpdate(peerPubkey, event.created_at, jsonData)
       }
       console.log(jsonData)
       if (jsonData.type === 1) {

@@ -142,19 +142,19 @@ export function useEvents() {
       console.log('woof')
       return
     }
-    if (!json.paymentoptions?.length) {
+    if (!json.payment_options?.length) {
       console.log('meow')
       marketStore.qrCodeDialog.data.message = json.message || "Unexpected error"
       return
     }
 
     console.log('moo')
-    console.log(json.paymentoptions)
-    const paymentRequest = json.paymentoptions.find(
+    console.log(json.payment_options)
+    const paymentRequest = json.payment_options.find(
       (o) => o.type == "ln"
     ).link
     if (!paymentRequest) return
-    marketStore.qrCodeDialog.data.paymentrequest = paymentRequest
+    marketStore.qrCodeDialog.data.payment_request = paymentRequest
     marketStore.qrCodeDialog.dismissMsg = $q.notify({
       timeout: 10000,
       message: "Waiting for payment...",
