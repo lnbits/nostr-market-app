@@ -118,7 +118,7 @@ export function useMarket() {
           )
         ).onOk(async () => {
           marketStore.config = { ...marketStore.config, opts: market.opts };
-          storage.applyUiConfigs(market?.opts);
+          marketStore.applyUiConfigs(market?.opts);
         });
       }
 
