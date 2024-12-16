@@ -558,8 +558,8 @@
           <strong><span v-text="qrCodeDialog.data.message"></span> </strong>
         </div>
         <div class="column full-width" v-else>
+          <h3 class="text-h5 text-primary q-mb-none q-mt-none">Order Summary</h3>
           <a :href="'lightning:' + qrCodeDialog.data?.payment_request" class="full-width">
-            <!-- refer to handlePaymentRequest function -->
             <div v-if="qrCodeDialog.data.payment_request" :ratio="1">
               <vue-qrcode
                 :value="qrCodeDialog.data.payment_request"
@@ -571,10 +571,61 @@
               <q-spinner color="primary" size="2.55em"></q-spinner>
             </div>
           </a>
-          <!-- <div class="full-width text-center">{{ activeCartDetails }}</div> -->
-          <div class="full-width text-center">Subtotal: {{ activeCartDetails.cartSubtotal }} {{ activeCartDetails.currency }}</div>
-          <div class="full-width text-center">Shipping: {{ activeCartDetails.shippingZone.cost }} {{ activeCartDetails.shippingZone.currency }}</div>
-          <div class="full-width text-center">Total: {{ activeCartDetails.cartSubtotal + activeCartDetails.shippingZone.cost }} {{ activeCartDetails.shippingZone.currency }}</div>
+          <div class="full-width q-mt-md">
+            <q-expansion-item
+              switch-toggle-side
+              dense
+              icon="shopping_cart"
+              label="Cart Items"
+              caption="Click to view/hide cart items"
+              class="bg-grey-2 bordered"
+              header-class="text-primary"
+              default-opened
+            >
+              <q-list padding class="bg-white" style="border: 1px solid rgba(0,0,0,0.12); border-radius: 4px; margin: 8px;">
+                <q-item v-for="(item, index) in checkoutCart.products" :key="index">
+                  <q-item-section>
+                    <q-item-label class="text-weight-medium text-secondary">{{ item.name }}</q-item-label>
+                    <q-item-label caption class="text-grey-8">
+                      Quantity: {{ item.orderedQuantity }} × {{ item.price }} {{ item.currency }}
+                    </q-item-label>
+                  </q-item-section>
+                  <q-item-section side>
+                    <div class="text-weight-bold text-primary">
+                      {{ item.orderedQuantity * item.price }} {{ item.currency }}
+                    </div>
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </q-expansion-item>
+          </div>
+          <q-list bordered class="q-mt-md">
+            <q-item>
+              <q-item-section>Subtotal</q-item-section>
+              <q-item-section side>
+                {{ activeCartDetails.cartSubtotal }} {{ activeCartDetails.currency }}
+              </q-item-section>
+            </q-item>
+
+            <q-item>
+              <q-item-section>Shipping</q-item-section>
+              <q-item-section side>
+                {{ activeCartDetails.shippingZone.cost }} {{ activeCartDetails.shippingZone.currency }}
+              </q-item-section>
+            </q-item>
+
+            <q-separator />
+
+            <q-item>
+              <q-item-section>
+                <q-item-label class="text-weight-bold">Total</q-item-label>
+              </q-item-section>
+              <q-item-section side class="text-weight-bold">
+                {{ activeCartDetails.cartSubtotal + activeCartDetails.shippingZone.cost }}
+                {{ activeCartDetails.shippingZone.currency }}
+              </q-item-section>
+            </q-item>
+          </q-list>
         </div>
       </div>
       <div class="row q-mt-lg">
