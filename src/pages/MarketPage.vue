@@ -566,11 +566,13 @@
             class="full-width"
           >
             <div v-if="qrCodeDialog.data.payment_request" :ratio="1">
-              <vue-qrcode
-                :value="qrCodeDialog.data.payment_request"
-                :options="{ width: 340 }"
-                class="rounded-borders"
-              ></vue-qrcode>
+              <div :class="{ 'dark-mode': $q.dark.isActive }">
+                <vue-qrcode
+                  :value="qrCodeDialog.data.payment_request"
+                  :options="qrCodeOptions"
+                  class="qrcode"
+                ></vue-qrcode>
+              </div>
             </div>
             <div v-else>
               <q-spinner color="primary" size="2.55em"></q-spinner>
@@ -1017,6 +1019,14 @@ const handleFilterData = (filterData) => {
   console.log("### handleFilterData", filterData);
   this.filterData = filterData;
   this.setActivePage("market");
+};
+
+const qrCodeOptions = {
+  width: 200,
+  color: {
+    dark: $q.dark.isActive ? '#FFBB00' : '#000000', // Foreground color
+    light: $q.dark.isActive ? '#000000' : '#ffffff', // Background color
+  },
 };
 
 </script>
