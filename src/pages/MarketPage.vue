@@ -557,18 +557,25 @@
         <div v-if="qrCodeDialog.data.message" class="q-my-lg">
           <strong><span v-text="qrCodeDialog.data.message"></span> </strong>
         </div>
-        <a v-else :href="'lightning:' + qrCodeDialog.data?.payment_request">
-          <div v-if="qrCodeDialog.data.payment_request" :ratio="1">
-            <vue-qrcode
-              :value="qrCodeDialog.data.payment_request"
-              :options="{ width: 340 }"
-              class="rounded-borders"
-            ></vue-qrcode>
-          </div>
-          <div v-else>
-            <q-spinner color="primary" size="2.55em"></q-spinner>
-          </div>
-        </a>
+        <div class="column full-width" v-else>
+          <a :href="'lightning:' + qrCodeDialog.data?.payment_request" class="full-width">
+            <!-- refer to handlePaymentRequest function -->
+            <div v-if="qrCodeDialog.data.payment_request" :ratio="1">
+              <vue-qrcode
+                :value="qrCodeDialog.data.payment_request"
+                :options="{ width: 340 }"
+                class="rounded-borders"
+              ></vue-qrcode>
+            </div>
+            <div v-else>
+              <q-spinner color="primary" size="2.55em"></q-spinner>
+            </div>
+          </a>
+          <!-- <div class="full-width text-center">{{ activeCartDetails }}</div> -->
+          <div class="full-width text-center">Subtotal: {{ activeCartDetails.cartSubtotal }} {{ activeCartDetails.currency }}</div>
+          <div class="full-width text-center">Shipping: {{ activeCartDetails.shippingZone.cost }} {{ activeCartDetails.shippingZone.currency }}</div>
+          <div class="full-width text-center">Total: {{ activeCartDetails.cartSubtotal + activeCartDetails.shippingZone.cost }} {{ activeCartDetails.shippingZone.currency }}</div>
+        </div>
       </div>
       <div class="row q-mt-lg">
         <q-btn
@@ -698,6 +705,7 @@ const {
   checkoutStall,
   activePage,
   activeOrderId,
+  activeCartDetails,
   allMarketsSelected,
   groupByStall,
   bannerImage,
