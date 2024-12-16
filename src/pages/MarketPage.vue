@@ -581,7 +581,7 @@
           <div
             v-if="qrCodeDialog.data.payment_request"
             class="text-center q-mt-md cursor-pointer"
-            @click="copyText(formattedQRCodeValue)"
+            @click="copyText(qrCodeDialog.data.payment_request)"
           >
             {{ formattedQRCodeValue }}
             <q-icon name="content_copy" class="q-ml-sm" />
