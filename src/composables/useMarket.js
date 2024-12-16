@@ -84,7 +84,7 @@ export function useMarket() {
     }
   };
 
-  const addMarket = async (naddr) => {
+  const addUpdateMarket = async (naddr, modUi = true) => {
     if (!naddr) return;
 
     try {
@@ -112,14 +112,21 @@ export function useMarket() {
 
       if (isJson(event.content)) {
         market.opts = JSON.parse(event.content);
-        $q.dialog(
-          confirm(
-            `Do you want to use the look and feel of the '${market.opts.name}' market?`
-          )
-        ).onOk(async () => {
+        if (modUi) {
+          $q.dialog(
+            confirm(
+              `Do you want to use the look and feel of the '${market.opts.name}' market?`
+            )
+          ).onOk(async () => {
+            marketStore.config = { ...marketStore.config, opts: market.opts };
+            marketStore.applyUiConfigs(market?.opts);
+          });
+        } else if ( naddr === marketStore.defaultMarketNaddr) {
           marketStore.config = { ...marketStore.config, opts: market.opts };
           marketStore.applyUiConfigs(market?.opts);
-        });
+        } else {
+          console.log("Loading markets without UI");
+        }
       }
 
       marketStore.markets = marketStore.markets.filter(
@@ -365,7 +372,7 @@ export function useMarket() {
   return {
     createMarket,
     navigateTo,
-    addMarket,
+    addUpdateMarket,
     updateMarket,
     deleteMarket,
     toggleMarket,

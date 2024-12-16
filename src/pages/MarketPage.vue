@@ -442,7 +442,7 @@
                 <li>
                   <span class="text-h6">
                     <q-btn
-                      @click="addMarket(defaultMarketNaddr)"
+                      @click="addUpdateMarket(defaultMarketNaddr)"
                       size="xl"
                       flat
                       color="secondary"
@@ -865,7 +865,7 @@ const {
 
 const {
   createMarket,
-  addMarket,
+  addUpdateMarket,
   updateMarket,
   deleteMarket,
   toggleMarket,
@@ -914,8 +914,13 @@ onMounted(async () => {
     restoreFromStorage();
 
     const params = new URLSearchParams(window.location.search);
-    await addMarket(params.get("naddr"));
+    await addUpdateMarket(params.get("naddr"));
     await _handleQueryParams(params);
+    markets.value.forEach(market => addUpdateMarket(market.naddr, false));
+    await addUpdateMarket(params.get("naddr"));
+
+    // NOTE: automatically add the default market
+    await addUpdateMarket(defaultMarketNaddr.value, false);
 
     isLoading.value = false;
     await loadRelaysData();
@@ -970,7 +975,7 @@ watch(
           cancel: 'No',
         }).onOk(async () => {
           searchText.value = '';
-          await addMarket(n);
+          await addUpdateMarket(n);
         });
       } catch (error) {
         console.error('Error decoding naddr:', error);
