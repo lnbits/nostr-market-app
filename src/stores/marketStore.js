@@ -3,8 +3,8 @@ import { useQuasar } from "quasar";
 
 export const useMarketStore = defineStore("marketStore", {
   state: () => ({
-    defaultBanner: useQuasar().config.staticPath + "images/nostr-cover.png",
-    defaultLogo: useQuasar().config.staticPath + "images/nostr-avatar.png",
+    defaultBanner: "https://atitlan.io/atitlanio-volight.png",
+    defaultLogo: "https://atitlan.io/aio_electric.png",
     defaultMarketNaddr:
       "naddr1qqjrzerxxu6xxdm994nxyc3s956xzdpc95ukyv3n94nxydrzvgunjcn9x56rwqgkwaehxw309ahx7um5wghxzarfw3kxzm3wd9hsz9nhwden5te0wfjkccte9eshg6t5d3skutnfdupzqz2527ue2pt5ttxukc3juz8m6x6kkha3lymcq5c6ugz7f48grs9pqvzqqqr4gvz5v3j7",
     account: null,
