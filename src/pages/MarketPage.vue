@@ -585,80 +585,75 @@
             <q-icon name="content_copy" class="q-ml-sm" />
           </div>
           <div class="full-width q-mt-md">
-            <q-expansion-item
-              switch-toggle-side
-              dense
-              icon="shopping_cart"
-              label="Cart Items"
-              caption="Click to view/hide cart items"
-              class="bg-grey-2 bordered"
-              header-class="text-primary"
-              default-opened
-            >
-              <q-list
-                padding
-                class="bg-white"
-                style="
-                  border: 1px solid rgba(0, 0, 0, 0.12);
-                  border-radius: 4px;
-                  margin: 8px;
-                "
+            <q-card bordered>
+              <q-expansion-item
+                switch-toggle-side
+                dense
+                icon="shopping_cart"
+                label="Cart Items"
+                caption="Click to view/hide cart items"
+                bordered
+                default-opened
               >
-                <q-item
-                  v-for="(item, index) in checkoutCart.products"
-                  :key="index"
-                >
-                  <q-item-section>
-                    <q-item-label class="text-weight-medium text-secondary">{{
-                      item.name
-                    }}</q-item-label>
-                    <q-item-label caption class="text-grey-8">
-                      Quantity: {{ item.orderedQuantity }} × {{ item.price }}
-                      {{ item.currency }}
-                    </q-item-label>
-                  </q-item-section>
-                  <q-item-section side>
-                    <div class="text-weight-bold text-primary">
-                      {{ item.orderedQuantity * item.price }}
-                      {{ item.currency }}
-                    </div>
-                  </q-item-section>
-                </q-item>
-              </q-list>
-            </q-expansion-item>
+                <q-list padding>
+                  <q-item
+                    v-for="(item, index) in checkoutCart.products"
+                    :key="index"
+                  >
+                    <q-item-section>
+                      <q-item-label class="text-weight-medium">{{
+                        item.name
+                      }}</q-item-label>
+                      <q-item-label caption>
+                        Quantity: {{ item.orderedQuantity }} × {{ item.price }}
+                        {{ item.currency }}
+                      </q-item-label>
+                    </q-item-section>
+                    <q-item-section side>
+                      <div class="text-weight-bold">
+                        {{ item.orderedQuantity * item.price }}
+                        {{ item.currency }}
+                      </div>
+                    </q-item-section>
+                  </q-item>
+                </q-list>
+              </q-expansion-item>
+            </q-card>
           </div>
-          <q-list bordered class="q-mt-md">
-            <q-item>
-              <q-item-section>Subtotal</q-item-section>
-              <q-item-section side>
-                {{ activeCartDetails.cartSubtotal }}
-                {{ activeCartDetails.currency }}
-              </q-item-section>
-            </q-item>
+          <q-card bordered>
+            <q-list bordered class="q-mt-md">
+              <q-item>
+                <q-item-section>Subtotal</q-item-section>
+                <q-item-section side>
+                  {{ activeCartDetails.cartSubtotal }}
+                  {{ activeCartDetails.currency }}
+                </q-item-section>
+              </q-item>
 
-            <q-item>
-              <q-item-section>Shipping</q-item-section>
-              <q-item-section side>
-                {{ activeCartDetails.shippingZone.cost }}
-                {{ activeCartDetails.shippingZone.currency }}
-              </q-item-section>
-            </q-item>
+              <q-item>
+                <q-item-section>Shipping</q-item-section>
+                <q-item-section side>
+                  {{ activeCartDetails.shippingZone.cost }}
+                  {{ activeCartDetails.shippingZone.currency }}
+                </q-item-section>
+              </q-item>
 
-            <q-separator />
+              <q-separator />
 
-            <q-item>
-              <q-item-section>
-                <q-item-label class="text-weight-bold">Total</q-item-label>
-              </q-item-section>
-              <q-item-section side class="text-weight-bold">
-                {{
-                  activeCartDetails.cartSubtotal +
-                  activeCartDetails.shippingZone.cost
-                }}
-                {{ activeCartDetails.shippingZone.currency }}
-              </q-item-section>
-            </q-item>
-          </q-list>
+              <q-item>
+                <q-item-section>
+                  <q-item-label class="text-weight-bold">Total</q-item-label>
+                </q-item-section>
+                <q-item-section side class="text-weight-bold">
+                  {{
+                    activeCartDetails.cartSubtotal +
+                    activeCartDetails.shippingZone.cost
+                  }}
+                  {{ activeCartDetails.shippingZone.currency }}
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-card>
         </div>
       </div>
       <div class="row q-mt-lg">
