@@ -225,8 +225,8 @@ export default defineComponent({
     },
     cartTotalWithShipping() {
       // NOTE: this assumes the shipping currency is the same as the cart currency
-      if (!this.shippingZone) return this.cartTotal;
-      return this.cartTotal + this.shippingZone.cost;
+      if (!this.shippingZone) return this.cartSubtotal;
+      return this.cartSubtotal + this.shippingZone.cost;
     },
     shippingZoneLabel() {
       if (!this.shippingZone) {
