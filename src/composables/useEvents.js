@@ -97,13 +97,16 @@ export function useEvents() {
   }
 
   const processProductWithStall = (p, e, stall) => {
+    const categories = e.tags
+      .filter(tag => tag[0] === 't')
+      .map(tag => tag[1]);
     const productToProcess = {
       ...p,
       stallName: stall.name,
       images: p.images || [p.image],
       pubkey: e.pubkey,
       id: e.d || p.id,
-      categories: e.t,
+      categories: categories,
       eventId: e.id,
       createdAt: e.created_at,
       relayUrls: [e.relayUrl],
