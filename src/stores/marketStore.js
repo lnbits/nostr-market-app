@@ -91,6 +91,13 @@ export const useMarketStore = defineStore("marketStore", {
     qInstance: useQuasar(),
   }),
   getters: {
+    // Assuming qrCodeDialog is a ref or reactive object
+    formattedQRCodeValue: (state) => {
+      const value = state.qrCodeDialog.data?.payment_request || "";
+      if (value.length <= 30) return value;
+      return `${value.slice(0, 13)}...${value.slice(-13)}`;
+    },
+
     processedEventIds: (state) => {
       const stallsEventIds = state.stalls.map((s) => s.eventId);
       const productsEventIds = state.products.map((p) => p.eventId);
