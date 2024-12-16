@@ -206,13 +206,13 @@ export const useMarketStore = defineStore("marketStore", {
       const hasPriceTo = (price) =>
         !this.filterData.priceTo || price <= this.filterData.priceTo;
 
-      const isInActiceStall = (stallId) =>
+      const isInActiveStall = (stallId) =>
         !this.activeStall || stallId == this.activeStall;
 
       let products = this.products.filter(
         (p) =>
           this.hasCategory(p.categories) &&
-          isInActiceStall(p.stall_id) &&
+          isInActiveStall(p.stall_id) &&
           isByMerchat(p.pubkey) &&
           isInMarket(p.pubkey) &&
           isInStall(p.stall_id) &&
