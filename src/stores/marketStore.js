@@ -91,11 +91,20 @@ export const useMarketStore = defineStore("marketStore", {
     qInstance: useQuasar(),
   }),
   getters: {
+    qrCodeOptions() {
+      return {
+        width: 333,
+        color: {
+          dark: this.qInstance.dark.isActive ? "#FFAA00" : "#000000", // Foreground color
+          light: this.qInstance.dark.isActive ? "#000000" : "#ffffff", // Background color
+        },
+      };
+    },
     // Assuming qrCodeDialog is a ref or reactive object
     formattedQRCodeValue: (state) => {
       const value = state.qrCodeDialog.data?.payment_request || "";
-      if (value.length <= 30) return value;
-      return `${value.slice(0, 13)}...${value.slice(-13)}`;
+      if (value.length <= 25) return value;
+      return `${value.slice(0, 11)}...${value.slice(-11)}`;
     },
 
     processedEventIds: (state) => {

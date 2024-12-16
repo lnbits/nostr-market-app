@@ -552,74 +552,94 @@
 
   <!-- INVOICE DIALOG -->
   <q-dialog v-model="qrCodeDialog.show" position="top">
-    <q-card class="q-pa-md q-pt-xl">
+    <q-card class="q-pa-xl q-pt-md">
       <div class="text-center q-mb-lg">
         <div v-if="qrCodeDialog.data.message" class="q-my-lg">
           <strong><span v-text="qrCodeDialog.data.message"></span> </strong>
         </div>
-        <div class="column full-width" v-else>
-          <h3 class="text-h5 text-primary q-mb-none q-mt-none">
-            Order Summary
-          </h3>
-          <a
-            :href="'lightning:' + qrCodeDialog.data?.payment_request"
-            class="full-width"
-          >
-            <div v-if="qrCodeDialog.data.payment_request" :ratio="1">
-              <div :class="{ 'dark-mode': $q.dark.isActive }">
-                <vue-qrcode
-                  :value="qrCodeDialog.data.payment_request"
-                  :options="qrCodeOptions"
-                  class="qrcode"
-                ></vue-qrcode>
+        <div v-else class="column">
+          <h3 class="text-h4 text-primary q-mb-none q-mt-none">Invoice</h3>
+          <q-card class="q-pa-sm">
+            <a
+              :href="'lightning:' + qrCodeDialog.data?.payment_request"
+              class=""
+            >
+              <div v-if="qrCodeDialog.data.payment_request" :ratio="1">
+                <div :class="{ 'dark-mode': $q.dark.isActive }">
+                  <vue-qrcode
+                    :value="qrCodeDialog.data.payment_request"
+                    :options="qrCodeOptions"
+                    class="qrcode size-16"
+                  ></vue-qrcode>
+                </div>
               </div>
-            </div>
-            <div v-else>
-              <q-spinner color="primary" size="2.55em"></q-spinner>
-            </div>
-          </a>
-          <div
-            v-if="qrCodeDialog.data.payment_request"
-            class="text-center q-mt-md cursor-pointer"
-            @click="copyText(qrCodeDialog.data.payment_request)"
-          >
-            {{ formattedQRCodeValue }}
-            <q-icon name="content_copy" class="q-ml-sm" />
-          </div>
-          <div class="full-width q-mt-md">
+              <div v-else>
+                <q-spinner color="primary" size="2.55em"></q-spinner>
+              </div>
+            </a>
+            <div
+              @click="copyText(qrCodeDialog.data.payment_request)"
+              class="cursor-pointer"
+          tyle>
+            <q-input
+              v-model="formattedQRCodeValue"
+              readonly
+              disabled
+              outlined
+              label="⚡ lightning invoice"
+              class="q-mb-md"
+            >
+              <template v-slot:append>
+                <q-btn
+                  icon="content_copy"
+                  flat
+                  color="gray"
+                  class="float-right q-mt-sm"
+                ></q-btn>
+              </template>
+            </q-input>
+              </div>
+          </q-card>
+          <div class="q-mt-md">
             <q-card bordered>
-              <q-expansion-item
-                switch-toggle-side
-                dense
-                icon="shopping_cart"
-                label="Cart Items"
-                caption="Click to view/hide cart items"
-                bordered
-                default-opened
-              >
-                <q-list padding>
-                  <q-item
-                    v-for="(item, index) in checkoutCart.products"
-                    :key="index"
-                  >
-                    <q-item-section>
-                      <q-item-label class="text-weight-medium">{{
-                        item.name
-                      }}</q-item-label>
-                      <q-item-label caption>
-                        Quantity: {{ item.orderedQuantity }} × {{ item.price }}
-                        {{ item.currency }}
-                      </q-item-label>
-                    </q-item-section>
-                    <q-item-section side>
-                      <div class="text-weight-bold">
-                        {{ item.orderedQuantity * item.price }}
-                        {{ item.currency }}
-                      </div>
-                    </q-item-section>
-                  </q-item>
-                </q-list>
-              </q-expansion-item>
+              <q-card-section>
+                <h3 class="text-h5 text-primary q-my-none">Order Summary</h3>
+              </q-card-section>
+              <q-separator />
+              <q-card-section>
+                <q-expansion-item
+                  switch-toggle-side
+                  dense
+                  icon="shopping_cart"
+                  label="Cart Items"
+                  caption="Click to view/hide cart items"
+                  bordered
+                  default-opened
+                >
+                  <q-list padding>
+                    <q-item
+                      v-for="(item, index) in checkoutCart.products"
+                      :key="index"
+                    >
+                      <q-item-section>
+                        <q-item-label class="text-weight-medium">{{
+                          item.name
+                        }}</q-item-label>
+                        <q-item-label caption>
+                          Quantity: {{ item.orderedQuantity }} ×
+                          {{ item.price }} {{ item.currency }}
+                        </q-item-label>
+                      </q-item-section>
+                      <q-item-section side>
+                        <div class="text-weight-bold">
+                          {{ item.orderedQuantity * item.price }}
+                          {{ item.currency }}
+                        </div>
+                      </q-item-section>
+                    </q-item>
+                  </q-list>
+                </q-expansion-item>
+              </q-card-section>
             </q-card>
           </div>
           <q-card bordered>
@@ -631,7 +651,6 @@
                   {{ activeCartDetails.currency }}
                 </q-item-section>
               </q-item>
-
               <q-item>
                 <q-item-section>Shipping</q-item-section>
                 <q-item-section side>
@@ -639,9 +658,7 @@
                   {{ activeCartDetails.shippingZone.currency }}
                 </q-item-section>
               </q-item>
-
               <q-separator />
-
               <q-item>
                 <q-item-section>
                   <q-item-label class="text-weight-bold">Total</q-item-label>
@@ -712,7 +729,11 @@ export default defineComponent({
     return {};
   },
   watch: {},
-  computed: {},
+  computed: {
+    isMobile() {
+      return window.innerWidth <= 768;
+    }
+  },
   methods: {
     handleFilterData(filterData) {
       console.log("### handleFilterData", filterData);
@@ -810,6 +831,7 @@ const {
   qInstance,
 
   // Getters (no-argument getters only)
+  qrCodeOptions,
   formattedQRCodeValue,
   processedEventIds,
   marketsName,
@@ -916,7 +938,7 @@ onMounted(async () => {
     const params = new URLSearchParams(window.location.search);
     await addUpdateMarket(params.get("naddr"));
     await _handleQueryParams(params);
-    markets.value.forEach(market => addUpdateMarket(market.naddr, false));
+    markets.value.forEach((market) => addUpdateMarket(market.naddr, false));
     await addUpdateMarket(params.get("naddr"));
 
     // NOTE: automatically add the default market
@@ -963,22 +985,22 @@ watch(
   () => searchText.value,
   async (n, o) => {
     if (!n) return;
-    if (n.toLowerCase().startsWith('naddr')) {
+    if (n.toLowerCase().startsWith("naddr")) {
       try {
         const { type, data } = NostrTools.nip19.decode(n);
-        if (type !== 'naddr' || data.kind !== 30019) return;
+        if (type !== "naddr" || data.kind !== 30019) return;
 
         $q.dialog({
-          title: 'Confirmation',
-          message: 'Do you want to import this market profile?',
-          ok: 'Yes',
-          cancel: 'No',
+          title: "Confirmation",
+          message: "Do you want to import this market profile?",
+          ok: "Yes",
+          cancel: "No",
         }).onOk(async () => {
-          searchText.value = '';
+          searchText.value = "";
           await addUpdateMarket(n);
         });
       } catch (error) {
-        console.error('Error decoding naddr:', error);
+        console.error("Error decoding naddr:", error);
       }
     }
   }
@@ -1025,13 +1047,21 @@ const handleFilterData = (filterData) => {
   this.filterData = filterData;
   this.setActivePage("market");
 };
-
-const qrCodeOptions = {
-  width: 200,
-  color: {
-    dark: $q.dark.isActive ? '#FFBB00' : '#000000', // Foreground color
-    light: $q.dark.isActive ? '#000000' : '#ffffff', // Background color
-  },
-};
-
 </script>
+
+<style scoped>
+/* ... existing styles ... */
+
+@media (max-width: 768px) {
+  .mobile-fixed-bottom {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: white; /* Optional: to ensure the background is visible */
+    z-index: 1000; /* Ensure it appears above other content */
+    padding: 10px; /* Optional: add some padding */
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1); /* Optional: add a shadow for better visibility */
+  }
+}
+</style>
