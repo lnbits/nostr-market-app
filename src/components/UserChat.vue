@@ -204,7 +204,7 @@ export default defineComponent({
       this.showRawMessage = true;
     },
   },
-  created: async function () {
+  created: function () {
     this.pubkeySelected(this.peerPubkeys[0]);
   },
 });
