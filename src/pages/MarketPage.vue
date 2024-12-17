@@ -580,25 +580,26 @@
             <div
               @click="copyText(qrCodeDialog.data.payment_request)"
               class="cursor-pointer"
-          tyle>
-            <q-input
-              v-model="formattedQRCodeValue"
-              readonly
-              disabled
-              outlined
-              label="⚡ lightning invoice"
-              class="q-mb-md"
+              tyle
             >
-              <template v-slot:append>
-                <q-btn
-                  icon="content_copy"
-                  flat
-                  color="gray"
-                  class="float-right q-mt-sm"
-                ></q-btn>
-              </template>
-            </q-input>
-              </div>
+              <q-input
+                v-model="formattedQRCodeValue"
+                readonly
+                disabled
+                outlined
+                label="⚡ lightning invoice"
+                class="q-mb-md"
+              >
+                <template v-slot:append>
+                  <q-btn
+                    icon="content_copy"
+                    flat
+                    color="gray"
+                    class="float-right q-mt-sm"
+                  ></q-btn>
+                </template>
+              </q-input>
+            </div>
           </q-card>
           <div class="q-mt-md">
             <q-card bordered>
@@ -732,39 +733,9 @@ export default defineComponent({
   computed: {
     isMobile() {
       return window.innerWidth <= 768;
-    }
-  },
-  methods: {
-    handleFilterData(filterData) {
-      console.log("### handleFilterData", filterData);
-      this.filterData = filterData;
-      this.setActivePage("market");
-    },
-    /////////////////////////////////////////////////////////// MISC ///////////////////////////////////////////////////////////
-
-    copyUrl: function () {
-      this.copyText(window.location);
-    },
-    copyText: function (text) {
-      var notify = this.$q.notify;
-      copyToClipboard(text).then(function () {
-        notify({
-          message: "Copied to clipboard!",
-          position: "bottom",
-        });
-      });
-    },
-    showInvoiceQr(invoice) {
-      if (!invoice) return;
-      this.qrCodeDialog = {
-        data: {
-          payment_request: invoice,
-        },
-        dismissMsg: null,
-        show: true,
-      };
     },
   },
+  methods: {},
 });
 </script>
 
@@ -863,6 +834,7 @@ const {
   getAmountFormatted,
   _handleQueryParams,
   handleFilterData,
+  showInvoiceQr,
   // Update the UI configuration and apply it
   updateUiConfig,
   // Ensure these actions are defined somewhere in the store
@@ -1009,6 +981,19 @@ watch(
   }
 );
 
+const copyUrl = () => {
+  this.copyText(window.location);
+};
+
+const copyText = (text) => {
+  var notify = this.$q.notify;
+  copyToClipboard(text).then(function () {
+    notify({
+      message: "Copied to clipboard!",
+      position: "bottom",
+    });
+  });
+};
 </script>
 
 <style scoped>

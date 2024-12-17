@@ -298,6 +298,16 @@ export const useMarketStore = defineStore("marketStore", {
   },
 
   actions: {
+    showInvoiceQr(invoice) {
+      if (!invoice) return;
+      this.qrCodeDialog = {
+        data: {
+          payment_request: invoice,
+        },
+        dismissMsg: null,
+        show: true,
+      };
+    },
     handleFilterData(filterData) {
       console.log("### handleFilterData", filterData);
       this.filterData = filterData;
