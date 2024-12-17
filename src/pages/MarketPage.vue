@@ -574,7 +574,7 @@
                 </div>
               </div>
               <div v-else>
-                <q-spinner color="primary" size="2.55em"></q-spinner>
+                <q-spinner class="q-ma-md" color="primary" size="2.55em"></q-spinner>
               </div>
             </a>
             <div
