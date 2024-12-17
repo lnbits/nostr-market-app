@@ -557,30 +557,33 @@
           <strong><span v-text="qrCodeDialog.data.message"></span> </strong>
         </div>
         <div v-else class="column">
-          <h3 class="text-h4 text-primary q-mb-none q-mt-none">Invoice</h3>
+          <h3 class="text-h4 text-primary q-mb-none q-mt-none">Pay Here</h3>
           <q-card class="q-pa-sm">
             <a
               :href="'lightning:' + qrCodeDialog.data?.payment_request"
               class=""
             >
               <div v-if="qrCodeDialog.data.payment_request" :ratio="1">
-                <div :class="{ 'dark-mode': $q.dark.isActive }">
+                <div
+                  :class="{ 'dark-mode': $q.dark.isActive }"
+                  class="qr-container"
+                >
                   <vue-qrcode
                     :value="qrCodeDialog.data.payment_request"
                     :options="qrCodeOptions"
-                    class="qrcode size-16"
                   ></vue-qrcode>
+                  <div class="lightning-bolt">⚡</div>
                 </div>
               </div>
               <div v-else>
-                <q-spinner class="q-ma-md" color="primary" size="2.55em"></q-spinner>
+                <q-spinner
+                  class="q-ma-md"
+                  color="primary"
+                  size="2.55em"
+                ></q-spinner>
               </div>
             </a>
-            <div
-              @click="copyText(qrCodeDialog.data.payment_request)"
-              class="cursor-pointer"
-              tyle
-            >
+            <div @click="copyText(qrCodeDialog.data.payment_request)">
               <q-input
                 v-model="formattedQRCodeValue"
                 readonly
@@ -980,6 +983,23 @@ const copyText = (text) => {
 
 <style scoped>
 /* ... existing styles ... */
+
+.qr-container {
+  position: relative;
+}
+
+.lightning-bolt {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 50px;
+  text-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  text-shadow:
+    0px 0px 1px rgba(0, 0, 0, 1),
+    0 0 10px rgba(255, 145, 0, 0.9);
+}
 
 @media (max-width: 768px) {
   .mobile-fixed-bottom {
