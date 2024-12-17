@@ -932,6 +932,7 @@ const { handleDmChatSelected, sendDirectMessage } = useDirectMessage();
 
 onMounted(async () => {
   try {
+    $q.dark.set(true);
     marketStore.pool = new NostrTools.SimplePool();
     bannerImage.value = defaultBanner;
     logoImage.value = defaultLogo;
