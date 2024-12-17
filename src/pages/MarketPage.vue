@@ -27,7 +27,6 @@
             <q-badge class="q-px-sm text-subtitle1" color="secondary"
               >naddr</q-badge
             >
-            here
           </template>
           <template v-slot:append>
             <q-icon v-if="!searchText" name="search" />
@@ -965,11 +964,11 @@ watch(
 );
 
 const copyUrl = () => {
-  this.copyText(window.location);
+  copyText(window.location);
 };
 
 const copyText = (text) => {
-  var notify = this.$q.notify;
+  var notify = $q.notify;
   copyToClipboard(text).then(function () {
     notify({
       message: "Copied to clipboard!",
