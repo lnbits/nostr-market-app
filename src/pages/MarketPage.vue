@@ -861,6 +861,8 @@ const {
   setActivePage,
   transitToPage,
   getAmountFormatted,
+  _handleQueryParams,
+  handleFilterData,
   // Update the UI configuration and apply it
   updateUiConfig,
   // Ensure these actions are defined somewhere in the store
@@ -1006,47 +1008,6 @@ watch(
   }
 );
 
-const _handleQueryParams = async (params) => {
-  const merchantPubkey = params.get("merchant");
-  console.log("### merchantPubkey", merchantPubkey);
-  const stallId = params.get("stall");
-  const productId = params.get("product");
-
-  // What component to render on start
-  if (stallId) {
-    this.setActivePage("customer-stall");
-    if (productId) {
-      this.activeProduct = productId;
-    }
-    this.activeStall = stallId;
-  }
-  if (merchantPubkey) {
-    if (!isValidKey(merchantPubkey)) {
-      this.$q.notify({
-        message: "Invalid merchant public key!",
-        icon: "warning",
-      });
-    } else if (this.allMerchants.includes(merchantPubkey)) {
-      console.log(`Request (URL) merchant (${merchantPubkey}) already exists!`);
-    } else {
-      this.$q
-        .dialog(
-          confirm(
-            "We found a merchant pubkey in your request. " +
-              "Do you want to add it to the merchants list?"
-          )
-        )
-        .onOk(async () => {
-          this.createMarket(false, [merchantPubkey]);
-        });
-    }
-  }
-};
-const handleFilterData = (filterData) => {
-  console.log("### handleFilterData", filterData);
-  this.filterData = filterData;
-  this.setActivePage("market");
-};
 </script>
 
 <style scoped>

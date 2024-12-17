@@ -298,6 +298,49 @@ export const useMarketStore = defineStore("marketStore", {
   },
 
   actions: {
+    handleFilterData(filterData) {
+      console.log("### handleFilterData", filterData);
+      this.filterData = filterData;
+      this.setActivePage("market");
+    },
+    async _handleQueryParams(params) {
+      const merchantPubkey = params.get("merchant");
+      console.log("### merchantPubkey", merchantPubkey);
+      const stallId = params.get("stall");
+      const productId = params.get("product");
+
+      // What component to render on start
+      if (stallId) {
+        this.setActivePage("customer-stall");
+        if (productId) {
+          this.activeProduct = productId;
+        }
+        this.activeStall = stallId;
+      }
+      if (merchantPubkey) {
+        if (!isValidKey(merchantPubkey)) {
+          this.$q.notify({
+            message: "Invalid merchant public key!",
+            icon: "warning",
+          });
+        } else if (this.allMerchants.includes(merchantPubkey)) {
+          console.log(
+            `Request (URL) merchant (${merchantPubkey}) already exists!`
+          );
+        } else {
+          this.$q
+            .dialog(
+              confirm(
+                "We found a merchant pubkey in your request. " +
+                  "Do you want to add it to the merchants list?"
+              )
+            )
+            .onOk(async () => {
+              this.createMarket(false, [merchantPubkey]);
+            });
+        }
+      }
+    },
     markNoteAsRead(noteId) {
       this.readNotes[noteId] = true;
       this.qInstance.localStorage.set("nostrmarket.readNotes", this.readNotes);
