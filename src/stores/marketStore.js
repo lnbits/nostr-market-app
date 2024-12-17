@@ -91,6 +91,9 @@ export const useMarketStore = defineStore("marketStore", {
     qInstance: useQuasar(),
   }),
   getters: {
+    isMobile() {
+      return window.innerWidth <= 768;
+    },
     qrCodeOptions() {
       return {
         width: 333,

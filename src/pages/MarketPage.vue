@@ -707,7 +707,7 @@
   </q-dialog>
 </template>
 
-<script>
+<script setup>
 import { defineComponent } from "vue";
 import VueQrcode from "@chenfengyuan/vue-qrcode";
 import { copyToClipboard } from "quasar";
@@ -723,23 +723,6 @@ import CustomerStall from "components/CustomerStall.vue";
 import CustomerStallList from "components/CustomerStallList.vue";
 import ProductFilter from "components/ProductFilter.vue";
 
-export default defineComponent({
-  name: "MarketPage",
-  components: { MarketConfig },
-  data: function () {
-    return {};
-  },
-  watch: {},
-  computed: {
-    isMobile() {
-      return window.innerWidth <= 768;
-    },
-  },
-  methods: {},
-});
-</script>
-
-<script setup>
 import { onMounted, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useQuasar } from "quasar";

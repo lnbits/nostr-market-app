@@ -139,20 +139,14 @@ export function useEvents() {
   }
 
   const handlePaymentRequest = (json) => {
-    console.warn("inside handle payment request")
-    console.log(json)
     if (json.id && json.id !== marketStore.activeOrderId) {
-      console.log('woof')
       return
     }
     if (!json.payment_options?.length) {
-      console.log('meow')
       marketStore.qrCodeDialog.data.message = json.message || "Unexpected error"
       return
     }
 
-    console.log('moo')
-    console.log(json.payment_options)
     const paymentRequest = json.payment_options.find(
       (o) => o.type == "ln"
     ).link
@@ -165,8 +159,6 @@ export function useEvents() {
   }
 
   const handleStructuredDm = async (event, peerPubkey) => {
-    console.log("inside handlestructuredm")
-    console.log(event, peerPubkey)
     try {
       const jsonData = JSON.parse(event.content);
       if ([0, 1, 2].indexOf(jsonData.type) !== -1) {
@@ -203,7 +195,6 @@ export function useEvents() {
     storage.persistDMEvent(e, peerPubkey)
 
     if (isJson(e.content)) {
-      console.warn("inside persistDMEvent")
       await handleStructuredDm(e, peerPubkey);
       // eventBus.processEvent(e, { type: 'dm', peerPubkey })
     }
