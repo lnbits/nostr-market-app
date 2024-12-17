@@ -132,6 +132,7 @@ import {
   animals,
 } from "unique-names-generator";
 import UserProfile from "./UserProfile.vue";
+import { useQuasar } from "quasar";
 
 export default defineComponent({
   name: "UserChat",
@@ -139,6 +140,7 @@ export default defineComponent({
   components: { UserProfile },
   data: function () {
     return {
+      $q: useQuasar(),
       selectedPubkey: null,
       selectedProfile: null,
       dmEvents: [],
@@ -156,9 +158,9 @@ export default defineComponent({
           message: e.content,
           sent,
           avatar: sent
-            ? $q.config.staticPath + "/images/blank-avatar.webp"
+            ? this.$q.config.staticPath + "/images/blank-avatar.webp"
             : this.selectedProfile?.picture ||
-              $q.config.staticPath + "/images/blank-avatar.webp",
+              this.$q.config.staticPath + "/images/blank-avatar.webp",
           dateFrom: moment(e.created_at * 1000).fromNow(),
         };
         if (isNaN(e.content) && isJson(e.content)) {
@@ -202,6 +204,8 @@ export default defineComponent({
       this.showRawMessage = true;
     },
   },
-  created: async function () {},
+  created: async function () {
+    this.pubkeySelected(this.peerPubkeys[0]);
+  },
 });
 </script>

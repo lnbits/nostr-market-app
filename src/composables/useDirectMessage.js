@@ -1,9 +1,13 @@
 import { useQuasar } from "quasar";
 import { useMarketStore } from "../stores/marketStore";
+import { useRelay } from "./useRelay"
+import { useStorage } from "./useStorage.js"
 
 export function useDirectMessage() {
   const $q = useQuasar();
   const marketStore = useMarketStore();
+  const relayService = useRelay();
+  const storage = useStorage();
 
   const handleDmChatSelected = (pubkey) => {
     marketStore.dmEvents =
@@ -38,9 +42,9 @@ export function useDirectMessage() {
         marketStore.account.privkey
       );
 
-      await this._sendDmEvent(event);
+      await _sendDmEvent(event);
       event.content = dm.message;
-      this.persistDMEvent(event, dm.to);
+      storage.persistDMEvent(event, dm.to);
     } catch (error) {
       $q.notify({
         type: "warning",
@@ -52,11 +56,11 @@ export function useDirectMessage() {
   const _sendDmEvent = async (event) => {
     const toPubkey = event.tags.filter((t) => t[0] === "p").map((t) => t[1]);
 
-    let relays = this.findRelaysForMerchant(toPubkey[0]);
+    let relays = relayService.findRelaysForMerchant(toPubkey[0]);
     if (!relays?.length) {
       relays = [...defaultRelays];
     }
-    await this.publishEventToRelays(event, relays);
+    await relayService.publishEventToRelays(event, relays);
   };
 
   const _noDmEvents = () => {
