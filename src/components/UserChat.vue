@@ -144,7 +144,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, defineProps, defineEmits } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import moment from 'moment'
 import {
   uniqueNamesGenerator,
