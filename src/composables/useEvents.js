@@ -93,6 +93,10 @@ export function useEvents() {
       return;
     }
 
+    if (p.currencty != "sat") {
+      p.formattedPrice = marketStore.getAmountFormatted(p.price, p.currency)
+    }
+
     processProductWithStall(p, e, stall);
   }
 
