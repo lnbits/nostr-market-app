@@ -34,60 +34,7 @@
         </q-input>
       </div>
       <div class="col-lg-4 col-md-6 col-12">
-        <div class="float-right">
-          <q-btn
-            color="gray"
-            icon="travel_explore"
-            flat
-            size="lg"
-            @click="navigateTo('product-filter')"
-            ><q-tooltip>Search for products on Nostr</q-tooltip>
-            <q-badge v-if="filterCount" color="secondary" floating>
-              <span v-text="filterCount"></span>
-            </q-badge>
-          </q-btn>
-
-          <q-btn
-            @click="navigateTo('user-config')"
-            color="gray"
-            :icon="account ? 'perm_identity' : 'person_add'"
-            flat
-            size="lg"
-            ><q-tooltip>User Config</q-tooltip></q-btn
-          >
-
-          <q-btn
-            @click="navigateTo('user-chat')"
-            color="gray"
-            icon="chat"
-            flat
-            size="lg"
-            ><q-tooltip>Chat</q-tooltip></q-btn
-          >
-          <q-btn
-            @click="navigateTo('customer-orders')"
-            color="gray"
-            icon="receipt_long"
-            flat
-            size="lg"
-            ><q-tooltip>Orders</q-tooltip></q-btn
-          >
-          <q-btn
-            color="gray"
-            icon="shopping_cart"
-            dense
-            round
-            flat
-            size="lg"
-            @click="navigateTo('shopping-cart-list')"
-          >
-            <q-tooltip>Shopping Cart</q-tooltip>
-
-            <q-badge v-if="allCartsItemCount" color="secondary" floating>
-              <span v-text="allCartsItemCount"></span>
-            </q-badge>
-          </q-btn>
-        </div>
+        <ButtonGroup />
       </div>
     </div>
 
@@ -724,6 +671,7 @@ import CustomerOrders from "components/CustomerOrders.vue";
 import CustomerStall from "components/CustomerStall.vue";
 import CustomerStallList from "components/CustomerStallList.vue";
 import ProductFilter from "components/ProductFilter.vue";
+import ButtonGroup from 'components/ButtonGroup.vue';
 
 import { onMounted, watch } from "vue";
 import { storeToRefs } from "pinia";
