@@ -1,8 +1,29 @@
 <template>
   <div>
     <q-card bordered class="q-mb-md">
-      <q-card-section horizontal>
-        <q-card-section class="col-sm-2 col-md-4">
+      <q-card-section :class="{'q-card-section-horizontal': !isMobile}">
+        <!-- Mobile dropdown -->
+        <q-card-section v-if="isMobile" class="q-pb-none">
+          <q-select
+            v-model="selectedPubkey"
+            :options="peerPubkeys"
+            @update:model-value="pubkeySelected"
+            class="q-mb-md"
+          >
+            <template v-slot:option="{ itemProps, opt: pubkey }">
+              <q-item v-bind="itemProps">
+                <user-profile :pubkey="pubkey" :profiles="profiles"></user-profile>
+              </q-item>
+            </template>
+
+            <template v-slot:selected>
+              <user-profile :pubkey="selectedPubkey" :profiles="profiles"></user-profile>
+            </template>
+          </q-select>
+        </q-card-section>
+
+        <!-- Desktop list -->
+        <q-card-section v-else class="col-sm-2 col-md-4">
           <q-item
             v-for="pubkey of peerPubkeys"
             :key="pubkey"
@@ -15,7 +36,7 @@
           </q-item>
         </q-card-section>
 
-        <q-separator vertical />
+        <q-separator v-if="!isMobile" vertical />
 
         <q-card-section style="width: 100%">
           <div style="width: 100%" class="q-pa-md row justify-center">
@@ -122,86 +143,116 @@
   </div>
 </template>
 
-<script>
-import moment from "moment";
-import { defineComponent } from "vue";
+<script setup>
+import { ref, onMounted, watch } from 'vue'
+import moment from 'moment'
 import {
   uniqueNamesGenerator,
   adjectives,
   colors,
   animals,
-} from "unique-names-generator";
-import UserProfile from "./UserProfile.vue";
+} from 'unique-names-generator'
+import UserProfile from './UserProfile.vue'
+import { useQuasar } from 'quasar'
 
-export default defineComponent({
-  name: "UserChat",
-  props: ["account-pubkey", "peer-pubkeys", "profiles", "events"],
-  components: { UserProfile },
-  data: function () {
-    return {
-      selectedPubkey: null,
-      selectedProfile: null,
-      dmEvents: [],
-      newMessage: null,
-      rawMessage: null,
-      showRawMessage: false,
-    };
-  },
-  watch: {
-    events(n) {
-      this.dmEvents = (n?.events || []).map((e) => {
-        const sent = this.accountPubkey === e.pubkey;
-        const dm = {
-          isJson: false,
-          message: e.content,
-          sent,
-          avatar: sent
-            ? $q.config.staticPath + "/images/blank-avatar.webp"
-            : this.selectedProfile?.picture ||
-              $q.config.staticPath + "/images/blank-avatar.webp",
-          dateFrom: moment(e.created_at * 1000).fromNow(),
-        };
-        if (isNaN(e.content) && isJson(e.content)) {
-          dm.isJson = true;
-          dm.message = JSON.parse(e.content);
-        }
-        return dm;
-      });
-      setTimeout(() => {
-        document.getElementById("bottom-user-chat").scrollIntoView();
-      }, 0);
-    },
-  },
-  methods: {
-    pubkeySelected(pubkey) {
-      this.selectedPubkey = pubkey;
-      this.selectedProfile = this.profiles.find((p) => p.pubkey === pubkey);
-      this.$emit("chat-selected", pubkey);
-      setTimeout(() => {
-        document.getElementById("bottom-user-chat").scrollIntoView();
-      }, 100);
-    },
-    async sendDirectMesage() {
-      this.$emit("send-dm", {
-        to: this.selectedPubkey,
-        message: this.newMessage,
-      });
-      this.newMessage = null;
-    },
-    pubkeyAlias(pubkey) {
-      return uniqueNamesGenerator({
-        dictionaries: [adjectives, animals, colors],
-        length: 2,
-        separator: " ",
-        style: "capital",
-        seed: pubkey,
-      });
-    },
-    showMessageRawData: function (index) {
-      this.rawMessage = JSON.stringify(this.dmEvents[index]?.message, null, 2);
-      this.showRawMessage = true;
-    },
-  },
-  created: async function () {},
-});
+const props = defineProps({
+  accountPubkey: String,
+  peerPubkeys: Array,
+  profiles: Array,
+  events: Object
+})
+
+const emit = defineEmits(['chat-selected', 'send-dm'])
+
+// State
+const $q = useQuasar()
+const selectedPubkey = ref(null)
+const selectedProfile = ref(null)
+const dmEvents = ref([])
+const newMessage = ref(null)
+const rawMessage = ref(null)
+const showRawMessage = ref(false)
+const isMobile = ref(false)
+
+// Methods
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
+
+const pubkeySelected = (pubkey) => {
+  selectedPubkey.value = pubkey
+  selectedProfile.value = props.profiles.find((p) => p.pubkey === pubkey)
+  emit('chat-selected', pubkey)
+  setTimeout(() => {
+    document.getElementById('bottom-user-chat').scrollIntoView()
+  }, 100)
+}
+
+const sendDirectMesage = () => {
+  emit('send-dm', {
+    to: selectedPubkey.value,
+    message: newMessage.value,
+  })
+  newMessage.value = null
+}
+
+const pubkeyAlias = (pubkey) => {
+  return uniqueNamesGenerator({
+    dictionaries: [adjectives, animals, colors],
+    length: 2,
+    separator: ' ',
+    style: 'capital',
+    seed: pubkey,
+  })
+}
+
+const showMessageRawData = (index) => {
+  rawMessage.value = JSON.stringify(dmEvents.value[index]?.message, null, 2)
+  showRawMessage.value = true
+}
+
+// Watchers
+watch(() => props.events, (newEvents) => {
+  dmEvents.value = (newEvents?.events || []).map((e) => {
+    const sent = props.accountPubkey === e.pubkey
+    const dm = {
+      isJson: false,
+      message: e.content,
+      sent,
+      avatar: sent
+        ? $q.config.staticPath + '/images/blank-avatar.webp'
+        : selectedProfile.value?.picture ||
+          $q.config.staticPath + '/images/blank-avatar.webp',
+      dateFrom: moment(e.created_at * 1000).fromNow(),
+    }
+    if (isNaN(e.content) && isJson(e.content)) {
+      dm.isJson = true
+      dm.message = JSON.parse(e.content)
+    }
+    return dm
+  })
+  setTimeout(() => {
+    document.getElementById('bottom-user-chat').scrollIntoView()
+  }, 0)
+}, { deep: true })
+
+// Lifecycle hooks
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+  pubkeySelected(props.peerPubkeys[0] || null)
+})
 </script>
+
+<style scoped>
+.q-card-section-horizontal {
+  display: flex;
+  flex-direction: row;
+}
+
+@media (max-width: 768px) {
+  .q-card-section-horizontal {
+    flex-direction: column;
+  }
+}
+</style>

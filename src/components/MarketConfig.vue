@@ -323,6 +323,7 @@
 <script>
 import { defineComponent } from "vue";
 import UserProfile from "./UserProfile.vue";
+import { useQuasar } from 'quasar'
 
 export default defineComponent({
   name: "EssentialLink",
@@ -333,6 +334,7 @@ export default defineComponent({
     return {
       tab: "marketplace",
 
+      $q: useQuasar(),
       merchantPubkey: null,
       relayUrl: null,
       marketData: {
@@ -347,7 +349,7 @@ export default defineComponent({
             picture: null,
             banner: null,
             theme: null,
-            darkMode: false,
+            darkMode: true,
           },
         },
       },
@@ -367,7 +369,7 @@ export default defineComponent({
   methods: {
     addMerchant: async function () {
       if (!isValidKey(this.merchantPubkey, "npub")) {
-        $q.notify({
+        this.$q.notify({
           message: "Invalid Public Key!",
           type: "warning",
         });
@@ -391,7 +393,7 @@ export default defineComponent({
       const relayUrl = (this.relayUrl || "").trim();
       if (!relayUrl.startsWith("wss://") && !relayUrl.startsWith("ws://")) {
         this.relayUrl = null;
-        $q.notify({
+        this.$q.notify({
           timeout: 5000,
           type: "warning",
           message: `Invalid relay URL.`,
@@ -404,7 +406,7 @@ export default defineComponent({
         this.marketData.relays.push(relayUrl);
         this.updateMarketData();
       } catch (error) {
-        $q.notify({
+        this.$q.notify({
           timeout: 5000,
           type: "warning",
           message: `Invalid relay URL.`,

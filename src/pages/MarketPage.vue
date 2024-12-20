@@ -27,7 +27,6 @@
             <q-badge class="q-px-sm text-subtitle1" color="secondary"
               >naddr</q-badge
             >
-            here
           </template>
           <template v-slot:append>
             <q-icon v-if="!searchText" name="search" />
@@ -35,60 +34,7 @@
         </q-input>
       </div>
       <div class="col-lg-4 col-md-6 col-12">
-        <div class="float-right">
-          <q-btn
-            color="gray"
-            icon="travel_explore"
-            flat
-            size="lg"
-            @click="navigateTo('product-filter')"
-            ><q-tooltip>Search for products on Nostr</q-tooltip>
-            <q-badge v-if="filterCount" color="secondary" floating>
-              <span v-text="filterCount"></span>
-            </q-badge>
-          </q-btn>
-
-          <q-btn
-            @click="navigateTo('user-config')"
-            color="gray"
-            :icon="account ? 'perm_identity' : 'person_add'"
-            flat
-            size="lg"
-            ><q-tooltip>User Config</q-tooltip></q-btn
-          >
-
-          <q-btn
-            @click="navigateTo('user-chat')"
-            color="gray"
-            icon="chat"
-            flat
-            size="lg"
-            ><q-tooltip>Chat</q-tooltip></q-btn
-          >
-          <q-btn
-            @click="navigateTo('customer-orders')"
-            color="gray"
-            icon="receipt_long"
-            flat
-            size="lg"
-            ><q-tooltip>Orders</q-tooltip></q-btn
-          >
-          <q-btn
-            color="gray"
-            icon="shopping_cart"
-            dense
-            round
-            flat
-            size="lg"
-            @click="navigateTo('shopping-cart-list')"
-          >
-            <q-tooltip>Shopping Cart</q-tooltip>
-
-            <q-badge v-if="allCartsItemCount" color="secondary" floating>
-              <span v-text="allCartsItemCount"></span>
-            </q-badge>
-          </q-btn>
-        </div>
+        <ButtonGroup />
       </div>
     </div>
 
@@ -442,7 +388,7 @@
                 <li>
                   <span class="text-h6">
                     <q-btn
-                      @click="addMarket(defaultMarketNaddr)"
+                      @click="addUpdateMarket(defaultMarketNaddr)"
                       size="xl"
                       flat
                       color="secondary"
@@ -552,33 +498,135 @@
 
   <!-- INVOICE DIALOG -->
   <q-dialog v-model="qrCodeDialog.show" position="top">
-    <q-card class="q-pa-md q-pt-xl">
+    <q-card class="q-pa-xl q-pt-md">
       <div class="text-center q-mb-lg">
         <div v-if="qrCodeDialog.data.message" class="q-my-lg">
           <strong><span v-text="qrCodeDialog.data.message"></span> </strong>
         </div>
-        <a v-else :href="'lightning:' + qrCodeDialog.data?.payment_request">
-          <div v-if="qrCodeDialog.data.payment_request" :ratio="1">
-            <vue-qrcode
-              :value="qrCodeDialog.data.payment_request"
-              :options="{ width: 340 }"
-              class="rounded-borders"
-            ></vue-qrcode>
+        <div v-else class="column">
+          <h3 class="text-h4 text-primary q-mb-none q-mt-none">Pay Here</h3>
+          <q-card class="q-pa-sm">
+            <a
+              :href="'lightning:' + qrCodeDialog.data?.payment_request"
+              class=""
+            >
+              <div v-if="qrCodeDialog.data.payment_request" :ratio="1">
+                <div
+                  :class="{ 'dark-mode': $q.dark.isActive }"
+                  class="qr-container"
+                >
+                  <vue-qrcode
+                    :value="qrCodeDialog.data.payment_request"
+                    :options="qrCodeOptions"
+                  ></vue-qrcode>
+                  <div class="lightning-bolt">⚡</div>
+                </div>
+              </div>
+              <div v-else>
+                <q-spinner
+                  class="q-ma-md"
+                  color="primary"
+                  size="2.55em"
+                ></q-spinner>
+              </div>
+            </a>
+            <div @click="copyText(qrCodeDialog.data.payment_request)">
+              <q-input
+                v-model="formattedQRCodeValue"
+                readonly
+                disabled
+                outlined
+                label="⚡ lightning invoice"
+                class="q-mb-md"
+              >
+                <template v-slot:append>
+                  <q-btn
+                    icon="content_copy"
+                    flat
+                    color="gray"
+                    class="float-right q-mt-sm"
+                  ></q-btn>
+                </template>
+              </q-input>
+            </div>
+          </q-card>
+          <div class="q-mt-md">
+            <q-card bordered>
+              <q-card-section>
+                <h3 class="text-h5 text-primary q-my-none">Order Summary</h3>
+              </q-card-section>
+              <q-separator />
+              <q-card-section>
+                <q-expansion-item
+                  switch-toggle-side
+                  dense
+                  icon="shopping_cart"
+                  label="Cart Items"
+                  caption="Click to view/hide cart items"
+                  bordered
+                  default-opened
+                >
+                  <q-list padding>
+                    <q-item
+                      v-for="(item, index) in checkoutCart.products"
+                      :key="index"
+                    >
+                      <q-item-section>
+                        <q-item-label class="text-weight-medium">{{
+                          item.name
+                        }}</q-item-label>
+                        <q-item-label caption>
+                          Quantity: {{ item.orderedQuantity }} ×
+                          {{ item.price }} {{ item.currency }}
+                        </q-item-label>
+                      </q-item-section>
+                      <q-item-section side>
+                        <div class="text-weight-bold">
+                          {{ item.orderedQuantity * item.price }}
+                          {{ item.currency }}
+                        </div>
+                      </q-item-section>
+                    </q-item>
+                  </q-list>
+                </q-expansion-item>
+              </q-card-section>
+            </q-card>
           </div>
-          <div v-else>
-            <q-spinner color="primary" size="2.55em"></q-spinner>
-          </div>
-        </a>
+          <q-card bordered>
+            <q-list bordered class="q-mt-md">
+              <q-item>
+                <q-item-section>Subtotal</q-item-section>
+                <q-item-section side>
+                  {{ activeCartDetails.cartSubtotal }}
+                  {{ activeCartDetails.currency }}
+                </q-item-section>
+              </q-item>
+              <q-item>
+                <q-item-section>Shipping</q-item-section>
+                <q-item-section side>
+                  {{ activeCartDetails.shippingZone.cost }}
+                  {{ activeCartDetails.shippingZone.currency }}
+                </q-item-section>
+              </q-item>
+              <q-separator />
+              <q-item>
+                <q-item-section>
+                  <q-item-label class="text-weight-bold">Total</q-item-label>
+                </q-item-section>
+                <q-item-section side class="text-weight-bold">
+                  {{
+                    activeCartDetails.cartSubtotal +
+                    activeCartDetails.shippingZone.cost
+                  }}
+                  {{ activeCartDetails.shippingZone.currency }}
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-card>
+        </div>
       </div>
       <div class="row q-mt-lg">
-        <q-btn
-          v-if="qrCodeDialog.data.payment_request"
-          outline
-          color="primary"
-          @click="copyText(qrCodeDialog.data.payment_request)"
-          >Copy invoice</q-btn
-        >
-        <q-btn flat v-close-popup color="grey" class="q-ml-auto">Close</q-btn>
+        <q-btn outline v-close-popup color="red" class="q-ml-auto">Close</q-btn>
       </div>
     </q-card>
   </q-dialog>
@@ -609,11 +657,6 @@
 </template>
 
 <script setup>
-import { useQuasar } from "quasar";
-window.$q = useQuasar();
-</script>
-
-<script>
 import { defineComponent } from "vue";
 import VueQrcode from "@chenfengyuan/vue-qrcode";
 import { copyToClipboard } from "quasar";
@@ -628,1587 +671,294 @@ import CustomerOrders from "components/CustomerOrders.vue";
 import CustomerStall from "components/CustomerStall.vue";
 import CustomerStallList from "components/CustomerStallList.vue";
 import ProductFilter from "components/ProductFilter.vue";
+import ButtonGroup from 'components/ButtonGroup.vue';
 
-export default defineComponent({
-  name: "MarketPage",
-  components: { MarketConfig },
-  data: function () {
-    return {
-      account: null,
-      accountMetadata: null,
-      accountDialog: {
-        show: false,
-        data: {
-          watchOnly: false,
-          key: null,
-        },
-      },
+import { onMounted, watch } from "vue";
+import { storeToRefs } from "pinia";
+import { useQuasar } from "quasar";
+import { useStorage } from "../composables/useStorage.js";
+import { useMarketStore } from "../stores/marketStore";
+import { useAccount } from "../composables/useAccount.js";
+import { useRelay } from "../composables/useRelay.js";
+import { useShoppingCart } from "../composables/useShoppingCart.js";
+import { useOrders } from "../composables/useOrders.js";
+import { useEvents } from "../composables/useEvents.js";
+import { useMarket } from "../composables/useMarket.js";
+import { useDirectMessage } from "../composables/useDirectMessage.js";
 
-      relaysData: {},
-      markets: [],
+const $q = useQuasar();
+// window.$q = $q; // if necessary
 
-      shoppingCarts: [],
-      checkoutCart: null,
-      checkoutStall: null,
+const marketStore = useMarketStore();
 
-      activePage: "market",
-      activeOrderId: null,
-      dmSubscriptions: {},
-      allMarketsSelected: false,
+const {
+  // State
+  defaultBanner,
+  defaultLogo,
+  defaultMarketNaddr,
+  account,
+  accountDialog,
+  market,
+  accountMetadata,
+  checkoutCart,
+  checkoutStall,
+  activePage,
+  activeOrderId,
+  activeCartDetails,
+  allMarketsSelected,
+  groupByStall,
+  bannerImage,
+  logoImage,
+  isLoading,
+  showFilterDetails,
+  searchText,
+  dmEvents,
+  activeMarket,
+  activeStall,
+  activeProduct,
+  pool,
+  relays,
+  dmSubscriptions,
+  stalls,
+  products,
+  orders,
+  profiles,
+  relaysData,
+  shoppingCarts,
+  markets,
+  qrCodeDialog,
+  naddrDialog,
+  filterData,
+  sort,
+  config,
+  readNotes,
+  qInstance,
 
-      qrCodeDialog: {
-        data: {
-          payment_request: null,
-          message: null,
-        },
-        dismissMsg: null,
-        show: false,
-      },
-      naddrDialog: {
-        show: false,
-        publishedNaddr: "",
-      },
+  // Getters (no-argument getters only)
+  qrCodeOptions,
+  formattedQRCodeValue,
+  processedEventIds,
+  marketsName,
+  stallName,
+  productName,
+  isValidAccountKey,
+  allCartsItemCount,
+  allCategories,
+  allCurrencies,
+  allMerchants,
+  allRelays,
+  activeMarketRelaysData,
+  dmPeers,
+  selectedMarketsMerchants,
+  filteredProducts,
+  filterCount,
+  filterStalls,
+} = storeToRefs(marketStore);
 
-      groupByStall: false,
+const {
+  markNoteAsRead,
+  focusOnElement,
+  sanitizeImageSrc,
+  sortProducts,
+  toggleCategoryFilter,
+  openAccountDialog,
+  setActivePage,
+  transitToPage,
+  getAmountFormatted,
+  _handleQueryParams,
+  handleFilterData,
+  showInvoiceQr,
+  // Update the UI configuration and apply it
+  updateUiConfig,
+  // Ensure these actions are defined somewhere in the store
+  hasCategory,
+  allStallCatgories,
+  allStallImages,
+} = useMarketStore();
 
-      relays: new Set(),
+// Note: The following "getters" are defined as functions with arguments:
+//   allStallCatgories(stallId)
+//   allStallImages(stallId)
+// Because they require arguments, they are not standard computed properties and
+// won't appear as refs. To use them, call them directly from the store instance.
+// Example:
+// const categories = marketStore.allStallCatgories(someStallId)
+// const images = marketStore.allStallImages(someStallId)
 
-      stalls: [],
-      products: [],
-      orders: {},
-      profiles: [],
+const {
+  restoreFromStorage,
+  persistStallsAndProducts,
+  persistRelaysData,
+  persistDMEvent,
+} = useStorage();
 
-      bannerImage: null,
-      logoImage: null,
-      isLoading: false,
+const {
+  createMarket,
+  addUpdateMarket,
+  updateMarket,
+  deleteMarket,
+  toggleMarket,
+  toggleAllMarkets,
+  showMarketConfig,
+  publishNaddr,
+  navigateTo,
+  _handleNewMerchant,
+  _handleNewRelay,
+  _handleRemoveMerchant,
+  _removeSubscriptionsForMerchant,
+  _handleRemovedRelay,
+} = useMarket();
 
-      showFilterDetails: false,
-      searchText: null,
-      filterData: {
-        categories: [],
-        merchants: [],
-        stalls: [],
-        currency: null,
-        priceFrom: null,
-        priceTo: null,
-      },
-      sort: {
-        options: [
-          { field: "categories", label: "Categories" },
-          { field: "name", label: "Name" },
-          { field: "description", label: "Description" },
-          { field: "stallName", label: "Stall" },
-          { field: "price", label: "Price" },
-          { field: "currency", label: "Currency" },
-          { field: "createdAt", label: "Changed" },
-        ],
-        by: "name",
-        order: "asc",
-      },
-      dmEvents: null,
+const { generateKeyPair, createAccount, logout, clearAllData } = useAccount();
 
-      activeMarket: null,
-      activeStall: null,
-      activeProduct: null,
+const {
+  startRelaysHealtCheck,
+  toRelayKey,
+  loadRelaysData,
+  loadRelayData,
+  connectToRelay,
+  requeryRelay,
+  buildRelayFilters,
+  queryRelay,
+  publishEventToRelays,
+  findRelaysForMerchant,
+} = useRelay();
 
-      pool: null,
-      config: {
-        opts: null,
-      },
+const {
+  addProductToCart,
+  removeProductFromCart,
+  removeCart,
+  checkoutStallCart,
+} = useShoppingCart();
 
-      defaultBanner: this.$q.config.staticPath + "images/nostr-cover.png",
-      defaultLogo: this.$q.config.staticPath + "images/nostr-avatar.png",
-      defaultMarketNaddr:
-        "naddr1qqjr2e34v3jrzd3e95ensdfn956rywps94snwcmr95crvepexc6kxcfcxqmnvqg5waehxw309aex2mrp0yhxgctdw4eju6t0qyv8wumn8ghj7un9d3shjtnndehhyapwwdhkx6tpdsq36amnwvaz7tmwdaehgu3dwp6kytnhv4kxcmmjv3jhytnwv46qzxthwden5te0dehhxarj9eax2cn9v3jk2tnrd3hh2eqprfmhxue69uhhyetvv9ujummjv9hxwetsd9kxctnyv4mqzrthwden5te0dehhxtnvdakqz9rhwden5te0wfjkccte9ehx7um5wghxyecpzpmhxue69uhkummnw3ezuamfdejsz9thwden5te0v4jx2m3wdehhxarj9ekxzmnyqgstle9w09rt8y7xdlqs33v23vqvdtqx6j6j2wa4984g9n77tppx2tqrqsqqqa2ruusd5z",
-      readNotes: {
-        merchants: false,
-        marketUi: false,
-      },
-    };
-  },
-  watch: {
-    config(n, _) {
-      if (!n?.opts?.ui?.banner) {
-        this.bannerImage = this.defaultBanner;
-      } else {
-        this.bannerImage = null;
-        setTimeout(() => {
-          (this.bannerImage = this.sanitizeImageSrc(
-            n?.opts?.ui?.banner,
-            this.defaultBanner
-          )),
-            1;
-        });
-      }
-      if (!n?.opts?.ui?.picture) {
-        this.logoImage = this.defaultLogo;
-      } else {
-        this.logoImage = null;
-        setTimeout(() => {
-          (this.logoImage = this.sanitizeImageSrc(
-            n?.opts?.ui?.picture,
-            this.defaultLogo
-          )),
-            1;
-        });
-      }
-    },
-    searchText(n, o) {
-      if (!n) return;
-      if (n.toLowerCase().startsWith("naddr")) {
-        try {
-          const { type, data } = NostrTools.nip19.decode(n);
-          if (type !== "naddr" || data.kind !== 30019) return;
-          this.$q
-            .dialog(confirm("Do you want to import this market profile?"))
-            .onOk(async () => {
-              this.searchText = "";
-              await this.addMarket(n);
-            });
-        } catch {}
-      }
-    },
-  },
-  computed: {
-    selectedMarketsMerchants() {
-      return [
-        ...new Set(
-          this.markets
-            .filter((m) => m.selected)
-            .map((m) => m.opts.merchants)
-            .flat()
-        ),
-      ];
-    },
-    filteredProducts() {
-      const isByMerchat = (pubkey) =>
-        !this.filterData.merchants?.length ||
-        this.filterData.merchants.includes(pubkey);
-      const isInMarket = (pubkey) =>
-        this.selectedMarketsMerchants.includes(pubkey);
-      const isInStall = (stallId) =>
-        !this.filterData.stalls?.length ||
-        this.filterData.stalls.includes(stallId);
-      const hasCurrency = (currency) =>
-        !this.filterData.currency ||
-        this.filterData.currency.toLowerCase() === currency.toLowerCase();
-      const hasPriceFrom = (price) =>
-        !this.filterData.priceFrom || price >= this.filterData.priceFrom;
-      const hasPriceTo = (price) =>
-        !this.filterData.priceTo || price <= this.filterData.priceTo;
-      const isInActiceStall = (stallId) =>
-        !this.activeStall || stallId == this.activeStall;
+const { placeOrder } = useOrders();
 
-      let products = this.products.filter(
-        (p) =>
-          this.hasCategory(p.categories) &&
-          isInActiceStall(p.stall_id) &&
-          isByMerchat(p.pubkey) &&
-          isInMarket(p.pubkey) &&
-          isInStall(p.stall_id) &&
-          hasCurrency(p.currency) &&
-          hasPriceFrom(p.price) &&
-          hasPriceTo(p.price)
-      );
+const { handleDmChatSelected, sendDirectMessage } = useDirectMessage();
 
-      products.sort((a, b) =>
-        productCompare(a, b, this.sort.by, this.sort.order)
-      );
-
-      if (!this.searchText || this.searchText.length < 2) return products;
-      const searchText = this.searchText.toLowerCase();
-      return products.filter(
-        (p) =>
-          p.name.toLowerCase().includes(searchText) ||
-          (p.description && p.description.toLowerCase().includes(searchText)) ||
-          (p.categories &&
-            p.categories.toString().toLowerCase().includes(searchText))
-      );
-    },
-    filterCount() {
-      let total = 0;
-      if (this.filterData.currency) total++;
-      if (this.filterData.priceFrom) total++;
-      if (this.filterData.priceTo) total++;
-      if (this.filterData.categories)
-        total += this.filterData.categories.length;
-      if (this.filterData.merchants) total += this.filterData.merchants.length;
-      if (this.filterData.stalls) total += this.filterData.stalls.length;
-
-      return total;
-    },
-    filterStalls() {
-      const stalls = this.stalls
-        .map((s) => ({
-          ...s,
-          categories: this.allStallCatgories(s.id),
-          images: this.allStallImages(s.id).slice(0, 8),
-          productCount: this.products.filter((p) => p.stall_id === s.id).length,
-        }))
-        .filter((p) => this.hasCategory(p.categories));
-
-      if (!this.searchText || this.searchText.length < 2) return stalls;
-
-      const searchText = this.searchText.toLowerCase();
-      return this.stalls.filter(
-        (s) =>
-          s.name.toLowerCase().includes(searchText) ||
-          (s.description && s.description.toLowerCase().includes(searchText)) ||
-          (s.categories &&
-            s.categories.toString().toLowerCase().includes(searchText))
-      );
-    },
-    marketsName() {
-      if (this.activeMarket) return this.activeMarket.opts?.name || "Market";
-      const selectedMarkets = this.markets.filter((m) => m.selected);
-      if (selectedMarkets.length === 0) return "No Market";
-      if (selectedMarkets.length === 1)
-        return selectedMarkets[0].opts?.name || "Market";
-      return selectedMarkets.length + " Markets";
-    },
-    stallName() {
-      return this.stalls.find((s) => s.id == this.activeStall)?.name || "Stall";
-    },
-    productName() {
-      return (
-        this.products.find((p) => p.id == this.activeProduct)?.name || "Product"
-      );
-    },
-    isValidAccountKey() {
-      return isValidKey(this.accountDialog.data.key);
-    },
-
-    allCartsItemCount() {
-      return this.shoppingCarts
-        .map((s) => s.products)
-        .flat()
-        .reduce((t, p) => t + p.orderedQuantity, 0);
-    },
-
-    allCategories() {
-      const categories = this.products
-        .map((p) => p.categories)
-        .flat()
-        .filter((c) => !!c)
-        .map((c) => c.toLowerCase());
-
-      const countedCategories = categories.reduce((all, c) => {
-        all[c] = (all[c] || 0) + 1;
-        return all;
-      }, {});
-      return Object.keys(countedCategories)
-        .map((category) => ({
-          category,
-          count: countedCategories[category],
-          selected: this.filterData.categories.indexOf(category) !== -1,
-        }))
-        .sort((a, b) => b.count - a.count);
-    },
-    allCurrencies() {
-      const currencies = this.products.map((p) => p.currency.toUpperCase());
-      return [...new Set(currencies)];
-    },
-    allMerchants() {
-      return [...new Set(this.markets.map((m) => m.opts.merchants).flat())];
-    },
-    allRelays() {
-      return [...new Set(this.markets.map((m) => m.relays).flat())];
-    },
-    processedEventIds() {
-      const stallsEventIds = this.stalls.map((s) => s.eventId);
-      const productsEventIds = this.products.map((p) => p.eventId);
-      // todo: DMs
-
-      return stallsEventIds.concat(productsEventIds);
-    },
-    activeMarketRelaysData() {
-      if (!this.activeMarket) return [];
-      return Object.values(this.relaysData).filter(
-        (r) => r && this.activeMarket.relays.includes(r.relayUrl)
-      );
-    },
-    dmPeers() {
-      // just to force refresh, do not remove
-      const temp = this.dmEvents;
-      const prefix = "nostrmarket.dm.";
-      const dmKeys = this.$q.localStorage
-        .getAllKeys()
-        .filter((k) => k.startsWith(prefix));
-
-      return dmKeys.map((k) => k.substring(prefix.length));
-    },
-  },
-
-  async created() {
-    this.bannerImage = this.defaultBanner;
-    this.logoImage = this.defaultLogo;
-
-    this._restoreFromStorage();
+onMounted(async () => {
+  try {
+    $q.dark.set(true);
+    marketStore.pool = new NostrTools.SimplePool();
+    bannerImage.value = defaultBanner;
+    logoImage.value = defaultLogo;
+    restoreFromStorage();
 
     const params = new URLSearchParams(window.location.search);
-
-    await this.addMarket(params.get("naddr"));
-    await this._handleQueryParams(params);
-
-    this.isLoading = false;
-    this._loadRelaysData();
-
-    this._startRelaysHealtCheck();
-  },
-  methods: {
-    async _handleQueryParams(params) {
-      const merchantPubkey = params.get("merchant");
-      console.log("### merchantPubkey", merchantPubkey);
-      const stallId = params.get("stall");
-      const productId = params.get("product");
-
-      // What component to render on start
-      if (stallId) {
-        this.setActivePage("customer-stall");
-        if (productId) {
-          this.activeProduct = productId;
-        }
-        this.activeStall = stallId;
-      }
-      if (merchantPubkey) {
-        if (!isValidKey(merchantPubkey)) {
-          this.$q.notify({
-            message: "Invalid merchant public key!",
-            icon: "warning",
-          });
-        } else if (this.allMerchants.includes(merchantPubkey)) {
-          console.log(
-            `Request (URL) merchant (${merchantPubkey}) already exists!`
-          );
-        } else {
-          this.$q
-            .dialog(
-              confirm(
-                "We found a merchant pubkey in your request. " +
-                  "Do you want to add it to the merchants list?"
-              )
-            )
-            .onOk(async () => {
-              this.createMarket(false, [merchantPubkey]);
-            });
-        }
-      }
-    },
-    _applyUiConfigs(opts = {}) {
-      const { name, about, ui } = opts;
-      this.$q.localStorage.set("nostrmarket.marketplaceConfig", {
-        name,
-        about,
-        ui,
-      });
-      if (ui?.theme) {
-        document.body.setAttribute("data-theme", ui.theme);
-      }
-      this.$q.dark.set(!!ui?.darkMode);
-    },
-    handleFilterData(filterData) {
-      console.log("### handleFilterData", filterData);
-      this.filterData = filterData;
-      this.setActivePage("market");
-    },
-
-    async updateUiConfig(data = { opts: {} }) {
-      const { name, about, ui } = data.opts;
-      this.config = {
-        ...this.config,
-        opts: { ...this.config.opts, name, about, ui },
-      };
-      this._applyUiConfigs(this.config?.opts);
-    },
-
-    /////////////////////////////////////////////////////////// ACCOUNT ///////////////////////////////////////////////////////////
-
-    generateKeyPair() {
-      this.accountDialog.data.key = NostrTools.generatePrivateKey();
-      this.accountDialog.data.watchOnly = false;
-    },
-    openAccountDialog() {
-      this.accountDialog.show = true;
-    },
-    async createAccount() {
-      if (isValidKey(this.accountDialog.data.key, "nsec")) {
-        let { key, watchOnly } = this.accountDialog.data;
-        if (key.startsWith("n")) {
-          let { type, data } = NostrTools.nip19.decode(key);
-          key = data;
-        }
-        const privkey = watchOnly ? null : key;
-        const pubkey = watchOnly ? key : NostrTools.getPublicKey(key);
-        this.$q.localStorage.set("nostrmarket.account", {
-          privkey,
-          pubkey,
-          nsec: NostrTools.nip19.nsecEncode(key),
-          npub: NostrTools.nip19.npubEncode(pubkey),
-
-          useExtension: false,
-        });
-        this.accountDialog.data = {
-          watchOnly: false,
-          key: null,
-        };
-        this.accountDialog.show = false;
-        this.account = this.$q.localStorage.getItem("nostrmarket.account");
-        await this._requeryAllRelays();
-      }
-      this.accountDialog.show = false;
-    },
-    logout() {
-      window.localStorage.removeItem("nostrmarket.account");
-      this._clearNonAccountData();
-      window.location.href = window.location.origin + window.location.pathname;
-      this.account = null;
-      this.accountMetadata = null;
-    },
-    clearAllData() {
-      this.$q
-        .dialog(
-          confirm(
-            "This will remove all information about merchants, products, relays and others. " +
-              "You will NOT be logged out. Do you want to proceed?"
-          )
-        )
-        .onOk(async () => {
-          this._clearNonAccountData();
-          window.location.href =
-            window.location.origin + window.location.pathname;
-        });
-    },
-    _clearNonAccountData() {
-      this.$q.localStorage
-        .getAllKeys()
-        .filter((key) => key !== "nostrmarket.account")
-        .forEach((key) => window.localStorage.removeItem(key));
-
-      this.orders = [];
-      this.config = { opts: null };
-      this.shoppingCarts = [];
-      this.checkoutCart = null;
-    },
-
-    /////////////////////////////////////////////////////////// RELAYS ///////////////////////////////////////////////////////////
-
-    _startRelaysHealtCheck() {
-      setInterval(() => {
-        Object.keys(this.relaysData).forEach((k) => {
-          const relayData = this.relaysData[k];
-          if (relayData.relay.status === WebSocket.CLOSED) {
-            this._connectToRelay(k);
-          }
-        });
-      }, 30 * 1000);
-    },
-
-    async _toRelayKey(relayUrl) {
-      return "relay_" + (await hash(relayUrl));
-    },
-
-    async _loadRelaysData() {
-      for (const market of this.markets) {
-        for (const relayUrl of market.relays) {
-          await this._loadRelayData(relayUrl, market.opts.merchants);
-        }
-      }
-
-      Object.keys(this.relaysData).forEach(this._connectToRelay);
-    },
-
-    async _loadRelayData(relayUrl, merchants) {
-      const relayKey = await this._toRelayKey(relayUrl);
-      this.relaysData[relayKey] = this.relaysData[relayKey] || {
-        relayUrl,
-        connected: false,
-        error: null,
-        merchants: [],
-        lastEventAt: this.getLastEventDateForRelay(relayUrl),
-      };
-      const relayData = this.relaysData[relayKey];
-      relayData.merchants = [...new Set(relayData.merchants.concat(merchants))];
-    },
-
-    getLastEventDateForRelay(relayUrl) {
-      const relay = (
-        this.$q.localStorage.getItem("nostrmarket.relays") || []
-      ).find((r) => r.relayUrl === relayUrl);
-      console.log("### getLastEventForRelay", relayUrl, relay);
-      return relay?.lastEventAt || 0;
-    },
-
-    async _connectToRelay(relayKey) {
-      const relayData = this.relaysData[relayKey];
-      try {
-        console.log(`Trying to connect to relay ${relayData.relayUrl}`);
-        relayData.relay = NostrTools.relayInit(relayData.relayUrl);
-        relayData.relay.on("connect", () => {
-          relayData.connected = true;
-          relayData.error = null;
-          console.log(`Connected to relay ${relayData.relayUrl}`);
-          this._queryRelay(relayKey);
-        });
-        relayData.relay.on("error", (error) => {
-          console.warn(`Error by relay ${relayData.relayUrl}`);
-          relayData.connected = false;
-          relayData.error = error;
-        });
-        await relayData.relay.connect();
-      } catch (error) {
-        relayData.connected = false;
-        relayData.error = `${error}`;
-        console.warn(`Failed to connect to ${relayData.relayUrl}`);
-      }
-    },
-
-    async _requeryAllRelays() {
-      Object.keys(this.relaysData).forEach(async (relayKey) => {
-        await this._requeryRelay(relayKey);
-      });
-    },
-
-    async _requeryRelay(relayKey) {
-      const relayData = this.relaysData[relayKey];
-      if (relayData.connected) {
-        relayData.sub?.unsub();
-        this._queryRelay(relayKey);
-      }
-    },
-
-    _buildRelayFilters(relayData) {
-      const authors = relayData.merchants;
-      const filters = [
-        {
-          kinds: [30017, 30018],
-          authors,
-          since: relayData.lastEventAt + 1,
-        },
-      ];
-      if (this.account?.pubkey) {
-        const since = this._noDmEvents() ? 0 : relayData.lastEventAt + 1;
-
-        filters.push(
-          {
-            kinds: [4],
-            "#p": [this.account.pubkey],
-            since,
-          },
-          {
-            kinds: [4],
-            authors: [this.account.pubkey],
-            since,
-          }
-        );
-      }
-      return filters;
-    },
-
-    async _queryRelay(relayKey) {
-      const relayData = this.relaysData[relayKey];
-      const filters = this._buildRelayFilters(relayData);
-
-      const events = await relayData.relay.list(filters);
-      console.log("### _queryRelay.filters", relayData.relayUrl, filters);
-      console.log("### _queryRelay.events", relayData.relayUrl, events);
-
-      if (events?.length) {
-        await this._processEvents(events, relayData);
-      }
-
-      relayData.sub = relayData.relay.sub(filters);
-      relayData.sub.on(
-        "event",
-        (event) => {
-          this._processEvents([event], relayData);
-        },
-        { id: "masterSub" } //pass ID to cancel previous sub
-      );
-    },
-
-    async _publishEventToRelays(event, relayUrls) {
-      let count = 0;
-      for (const relayUrl of relayUrls) {
-        if (await this._publishEventToRelay(event, relayUrl)) {
-          count++;
-        }
-      }
-      return count;
-    },
-
-    async _publishEventToRelay(event, relayUrl) {
-      try {
-        const relayKey = await this._toRelayKey(relayUrl);
-        const relayData = this.relaysData[relayKey];
-        if (relayData?.connected) {
-          await relayData.relay.publish(event);
-        }
-        return true;
-      } catch (error) {
-        console.warn(error);
-        return false;
-      }
-    },
-
-    _findRelaysForMerchant(pubkey) {
-      const relaysForMerchant = this.markets
-        .filter((m) => m.opts.merchants.includes(pubkey))
-        .map((m) => m.relays)
-        .flat();
-
-      return [...new Set(relaysForMerchant)];
-    },
-    /////////////////////////////////////////////////////////// PROCESS EVENTS ///////////////////////////////////////////////////////////
-
-    _processEvents(events, relayData) {
-      if (!events?.length) return;
-      console.log("### _processEvents", relayData.relayUrl, events);
-      const lastEventAt = events.sort((a, b) => b.created_at - a.created_at)[0]
-        .created_at;
-      relayData.lastEventAt = Math.max(lastEventAt, relayData.lastEventAt);
-
-      events = events
-        .filter((e) => !this.processedEventIds.includes(e.id))
-        .map((e) => ({ ...e, relayUrl: relayData.relayUrl }))
-        .map(eventToObj);
-
-      events.filter((e) => e.kind === 0).forEach(this._processProfileEvents);
-      events.filter((e) => e.kind === 4).forEach(this._processDmEvents);
-      events.filter((e) => e.kind === 5).forEach(this._processDeleteEvents);
-      events.filter((e) => e.kind === 30017).forEach(this._processStallEvents);
-      events
-        .filter((e) => e.kind === 30018)
-        .forEach(this._processProductEvents);
-
-      this._persistStallsAndProducts();
-      this._persistRelaysData();
-    },
-
-    _processProfileEvents(e) {
-      try {
-        this.profiles = this.profiles.filter((p) => p.pubkey !== e.pubkey);
-        this.profiles.push({ pubkey: e.pubkey, ...e.content });
-        this.$q.localStorage.set("nostrmarket.profiles", this.profiles);
-      } catch (error) {
-        console.warn(error);
-      }
-    },
-
-    _processStallEvents(e) {
-      this._processStall({
-        ...e.content,
-        id: e.d,
-        pubkey: e.pubkey,
-        createdAt: e.created_at,
-        eventId: e.id,
-        relayUrls: [e.relayUrl],
-      });
-    },
-
-    _processStall(stall) {
-      const stallIndex = this.stalls.findIndex(
-        (s) => s.id === stall.id && s.pubkey === stall.pubkey
-      );
-      if (stallIndex === -1) {
-        this.stalls.push(stall);
-        return;
-      }
-
-      const existingStall = this.stalls[stallIndex];
-
-      if (existingStall.createdAt < stall.createdAt) {
-        this.stalls.splice(stallIndex, 1, stall);
-        this.products
-          .filter((p) => p.pubkey === stall.pubkey && p.stall_id === stall.id)
-          .forEach((p) => (p.stallName = stall.name));
-      }
-    },
-
-    _processProductEvents(e) {
-      const p = { ...e.content };
-      const stall = this.stalls.find((s) => s.id == p.stall_id);
-
-      if (!stall) return;
-      if (p.currency != "sat") {
-        p.formatedPrice = this.getAmountFormated(p.price, p.currency);
-      }
-
-      this._processProduct({
-        ...p,
-        stallName: stall.name,
-        images: p.images || [p.image],
-        pubkey: e.pubkey,
-        id: e.d,
-        categories: e.t,
-        eventId: e.id,
-        createdAt: e.created_at,
-        relayUrls: [e.relayUrl],
-      });
-    },
-
-    _processProduct(product) {
-      const productIndex = this.products.findIndex(
-        (p) => p.id === product.id && p.pubkey === product.pubkey
-      );
-      if (productIndex === -1) {
-        this.products.push(product);
-        return;
-      }
-      const existingProduct = this.products[productIndex];
-      existingProduct.relayUrls = [
-        ...new Set(product.relayUrls.concat(existingProduct.relayUrls)),
-      ];
-      if (existingProduct.createdAt < product.createdAt) {
-        this.products.splice(productIndex, 1, product);
-      }
-    },
-
-    async _processDmEvents(e) {
-      if (!this.account?.pubkey) return;
-      const receiverPubkey = e.tags.find(
-        ([k, v]) => k === "p" && v && v !== ""
-      )[1];
-      const isSentByMe = e.pubkey === this.account.pubkey;
-      if (receiverPubkey !== this.account.pubkey && !isSentByMe) {
-        console.warn("Unexpected DM. Dropped!");
-        return;
-      }
-
-      const peerPubkey = isSentByMe ? receiverPubkey : e.pubkey;
-      e.content = await NostrTools.nip04.decrypt(
-        this.account.privkey,
-        peerPubkey,
-        e.content
-      );
-
-      this._persistDMEvent(e, peerPubkey);
-      if (isJson(e.content)) {
-        await this._handleStructuredDm(e, peerPubkey);
-      }
-    },
-
-    async _processDeleteEvents(e) {
-      const deletedEventIds = (e.tags || [])
-        .filter((t) => t[0] === "e")
-        .map((t) => t[1]);
-
-      const deletedStallsIds = this.stalls
-        .filter(
-          (s) => s.pubkey === e.pubkey && deletedEventIds.includes(s.eventId)
-        )
-        .map((s) => s.id);
-
-      const isDeletedProduct = (p) =>
-        p.pubkey === e.pubkey &&
-        (deletedEventIds.includes(p.eventId) ||
-          deletedStallsIds.includes(p.stall_id));
-      this.products = this.products.filter((p) => !isDeletedProduct(p));
-
-      const isDeletedStall = (s) =>
-        s.pubkey === e.pubkey && deletedEventIds.includes(s.eventId);
-      this.stalls = this.stalls.filter((s) => !isDeletedStall(s));
-    },
-
-    /////////////////////////////////////////////////////////// MARKET ///////////////////////////////////////////////////////////
-
-    async createMarket(navigateToConfig, merchants) {
-      try {
-        this.setActivePage("loading");
-        const market = {
-          d: crypto.randomUUID(),
-          pubkey: this.account?.pubkey || "",
-          relays: [...defaultRelays],
-          selected: true,
-          opts: {
-            name: "New Market",
-            merchants: merchants || [],
-            ui: {},
-          },
-        };
-        this.markets.unshift(market);
-        this.$q.localStorage.set("nostrmarket.markets", this.markets);
-
-        for (const relayUrl of market.relays) {
-          // do not wait for relays
-          this._handleNewRelay(relayUrl, market);
-        }
-        if (navigateToConfig === true) {
-          this.showMarketConfig(0);
-        }
-      } catch (error) {
-        console.warn(error);
-      } finally {
-        this.setActivePage("market-config");
-      }
-    },
-    async addMarket(naddr) {
-      if (!naddr) return;
-
-      try {
-        this.setActivePage("loading");
-        const { type, data } = NostrTools.nip19.decode(naddr);
-        if (type !== "naddr" || data.kind !== 30019) return; // just double check
-
-        const market = {
-          d: data.identifier,
-          pubkey: data.pubkey,
-          relays: data.relays,
-          selected: true,
-        };
-
-        const pool = new NostrTools.SimplePool();
-        const event = await pool.get(market.relays, {
-          kinds: [30019],
-          limit: 1,
-          authors: [market.pubkey],
-          "#d": [market.d],
-        });
-
-        if (!event) return;
-
-        if (isJson(event.content)) {
-          market.opts = JSON.parse(event.content);
-          this.$q
-            .dialog(
-              confirm(
-                `Do you want to use the look and feel of the '${market.opts.name}' market?`
-              )
-            )
-            .onOk(async () => {
-              this.config = { ...this.config, opts: market.opts };
-              this._applyUiConfigs(market?.opts);
-            });
-        }
-
-        this.markets = this.markets.filter(
-          (m) => m.d !== market.d || m.pubkey !== market.pubkey
-        );
-        this.markets.unshift(market);
-        this.$q.localStorage.set("nostrmarket.markets", this.markets);
-
-        for (const relayUrl of market.relays) {
-          await this._handleNewRelay(relayUrl, market);
-        }
-      } catch (error) {
-        console.warn(error);
-      } finally {
-        this.setActivePage("market");
-      }
-    },
-    updateMarket(market) {
-      try {
-        this.isLoading = true;
-
-        const { d, pubkey } = market;
-
-        const existingMarket =
-          this.markets.find((m) => m.d === d && m.pubkey === pubkey) || {};
-
-        const newMerchants = market.opts?.merchants.filter(
-          (m) => !existingMarket.opts?.merchants.includes(m)
-        );
-        const removedMerchants = existingMarket.opts?.merchants.filter(
-          (m) => !market.opts?.merchants.includes(m)
-        );
-        const newRelays = market.relays.filter(
-          (r) => !existingMarket.relays.includes(r)
-        );
-        const removedRelays = existingMarket.relays.filter(
-          (r) => !market.relays.includes(r)
-        );
-
-        this.markets = this.markets.filter(
-          (m) => m.d !== d || m.pubkey !== pubkey
-        );
-        this.markets.unshift(market);
-        this.$q.localStorage.set("nostrmarket.markets", this.markets);
-
-        removedMerchants?.forEach(this._handleRemoveMerchant);
-        newMerchants?.forEach((m) => this._handleNewMerchant(market, m));
-
-        console.log("### newRelays", newRelays);
-        console.log("### removedRelays", removedRelays);
-
-        newRelays?.forEach((r) => this._handleNewRelay(r, market));
-        removedRelays?.forEach(this._handleRemovedRelay);
-
-        // stalls and products can be removed when a market is updated
-        this._persistStallsAndProducts();
-        this._persistRelaysData();
-      } catch (error) {
-        console.warn(error);
-      } finally {
-        this.isLoading = false;
-      }
-    },
-    deleteMarket(market) {
-      try {
-        this.isLoading = true;
-
-        const { d, pubkey } = market;
-        this.markets = this.markets.filter(
-          (m) => m.d !== d || m.pubkey !== pubkey
-        );
-        this.$q.localStorage.set("nostrmarket.markets", this.markets);
-        if (
-          this.activeMarket &&
-          this.activeMarket.d === d &&
-          this.activeMarket.pubkey === pubkey
-        ) {
-          this.activeMarket = null;
-          this.navigateTo("market");
-          this.updateUiConfig(this.markets[0]);
-        }
-        market.opts.merchants?.forEach(this._handleRemoveMerchant);
-        market.relays?.forEach(this._handleRemovedRelay);
-
-        this._persistStallsAndProducts();
-        this._persistRelaysData();
-      } catch (error) {
-        console.warn(error);
-      } finally {
-        this.isLoading = false;
-      }
-    },
-    toggleMarket() {
-      this.allMarketsSelected = !this.markets.find((m) => !m.selected);
-      this.$q.localStorage.set("nostrmarket.markets", this.markets);
-    },
-    toggleAllMarkets() {
-      this.markets.forEach((m) => (m.selected = this.allMarketsSelected));
-      this.$q.localStorage.set("nostrmarket.markets", this.markets);
-    },
-    showMarketConfig(index) {
-      this.activeMarket = this.markets[index];
-      this.transitToPage("market-config");
-    },
-    async publishNaddr(marketData) {
-      if (!this.account?.privkey) {
-        this.openAccountDialog();
-        this.$q.notify({
-          message: "Login Required!",
-          icon: "warning",
-        });
-        return;
-      }
-
-      console.log("### marketData", marketData);
-      const identifier = marketData.d ?? crypto.randomUUID();
-      const event = {
-        ...(await NostrTools.getBlankEvent()),
-        kind: 30019,
-        content: JSON.stringify(marketData.opts),
-        created_at: Math.floor(Date.now() / 1000),
-        tags: [["d", identifier]],
-        pubkey: this.account.pubkey,
-      };
-      event.id = NostrTools.getEventHash(event);
-      try {
-        event.sig = await NostrTools.signEvent(event, this.account.privkey);
-
-        const relayCount = await this._publishEventToRelays(
-          event,
-          marketData.relays
-        );
-
-        this.$q.notify({
-          type: relayCount ? "positive" : "warning",
-          message: relayCount
-            ? `The market profile has been published tp (${relayCount} relays)!`
-            : "The market profile could not be published",
-        });
-      } catch (err) {
-        console.error(err);
-        this.$q.notify({
-          message: "Cannot publish market profile",
-          caption: `Error: ${err}`,
-          color: "negative",
-        });
-        return;
-      }
-      const naddr = NostrTools.nip19.naddrEncode({
-        pubkey: event.pubkey,
-        kind: 30019,
-        identifier: identifier,
-        relays: marketData.relays,
-      });
-      this.naddrDialog.publishedNaddr = naddr;
-      this.naddrDialog.show = true;
-    },
-
-    _handleNewMerchant(market, merchantPubkey) {
-      Object.keys(this.relaysData).forEach(async (relayKey) => {
-        const relayData = this.relaysData[relayKey];
-        if (!market.relays.includes(relayData.relayUrl)) return;
-        if (relayData.merchants.includes(merchantPubkey)) return;
-
-        const events = await relayData.relay.list([
-          { kinds: [30017, 30018], authors: [merchantPubkey] },
-        ]);
-        await this._processEvents(events, relayData);
-
-        relayData.merchants.push(merchantPubkey);
-        await this._requeryRelay(relayKey);
-      });
-    },
-
-    async _handleNewRelay(relayUrl, market) {
-      const relayKey = await this._toRelayKey(relayUrl);
-      if (this.relaysData[relayKey]) {
-        const relayData = this.relaysData[relayKey];
-        const events = await relayData.relay.list([
-          { kinds: [30017, 30018], authors: market.opts.merchants },
-        ]);
-
-        await this._processEvents(events, relayData);
-        relayData.merchants = [
-          ...new Set(relayData.merchants.concat(market.opts.merchants)),
-        ];
-        await this._requeryRelay(relayKey);
-      } else {
-        await this._loadRelayData(relayUrl, market.opts.merchants);
-        await this._connectToRelay(relayKey);
-      }
-    },
-    _handleRemoveMerchant(merchantPubkey) {
-      const marketWithMerchant = this.markets.find((m) =>
-        m.opts.merchants.find((mr) => mr === merchantPubkey)
-      );
-      // other markets still have this merchant
-      if (marketWithMerchant) return;
-
-      // remove all products and stalls from that merchant
-      this.products = this.products.filter((p) => p.pubkey !== merchantPubkey);
-      this.stalls = this.stalls.filter((s) => s.pubkey !== merchantPubkey);
-
-      this._removeSubscriptionsForMerchant(merchantPubkey);
-    },
-    _removeSubscriptionsForMerchant(merchantPubkey) {
-      Object.keys(this.relaysData).forEach(async (relayKey) => {
-        const relayData = this.relaysData[relayKey];
-        if (!relayData.merchants.includes(merchantPubkey)) return;
-        relayData.merchants = relayData.merchants.filter(
-          (m) => m !== merchantPubkey
-        );
-
-        await this._requeryRelay(relayKey);
-      });
-    },
-    async _handleRemovedRelay(relayUrl) {
-      // todo: later
-      // leave products and stalls alone
-      const marketWitRelay = this.markets.find((m) =>
-        m.relays.find((r) => r === relayUrl)
-      );
-      if (!marketWitRelay) {
-        // relay no longer exists
-        const relayKey = await this._toRelayKey(relayUrl);
-        delete this.relaysData[relayKey];
-        this._persistRelaysData();
-      }
-    },
-    /////////////////////////////////////////////////////////// SHOPPING CART ///////////////////////////////////////////////////////////
-
-    addProductToCart(item) {
-      let stallCart = this.shoppingCarts.find((s) => s.id === item.stall_id);
-      if (!stallCart) {
-        stallCart = {
-          id: item.stall_id,
-          products: [],
-        };
-        this.shoppingCarts.push(stallCart);
-      }
-      stallCart.merchant = item.pubkey;
-
-      let product = stallCart.products.find((p) => p.id === item.id);
-      if (!product) {
-        product = { ...item, orderedQuantity: 0 };
-        stallCart.products.push(product);
-      }
-      product.orderedQuantity = Math.min(
-        product.quantity,
-        item.orderedQuantity || product.orderedQuantity + 1
-      );
-
-      this.$q.localStorage.set("nostrmarket.shoppingCarts", this.shoppingCarts);
-
-      this.$q.notify({
-        type: "positive",
-        message: "Product added to cart!",
-      });
-    },
-
-    removeProductFromCart(item) {
-      const stallCart = this.shoppingCarts.find((c) => c.id === item.stallId);
-      if (stallCart) {
-        stallCart.products = stallCart.products.filter(
-          (p) => p.id !== item.productId
-        );
-        if (!stallCart.products.length) {
-          this.shoppingCarts = this.shoppingCarts.filter(
-            (s) => s.id !== item.stallId
-          );
-        }
-        this.$q.localStorage.set(
-          "nostrmarket.shoppingCarts",
-          this.shoppingCarts
-        );
-      }
-    },
-    removeCart(cartId) {
-      this.shoppingCarts = this.shoppingCarts.filter((s) => s.id !== cartId);
-      this.$q.localStorage.set("nostrmarket.shoppingCarts", this.shoppingCarts);
-    },
-
-    checkoutStallCart(cart) {
-      this.checkoutCart = cart;
-      this.checkoutStall = this.stalls.find((s) => s.id === cart.id);
-      this.setActivePage("shopping-cart-checkout");
-    },
-
-    /////////////////////////////////////////////////////////// DIRRECT MESSAGES ///////////////////////////////////////////////////////////
-
-    handleDmChatSelected(pubkey) {
-      this.dmEvents =
-        this.$q.localStorage.getItem(`nostrmarket.dm.${pubkey}`) || {};
-    },
-
-    async sendDirectMessage(dm) {
-      if (!this.account?.pubkey) {
-        this.$q.notify({
-          type: "warning",
-          message: "Cannot send message. No user logged in!",
-        });
-        return;
-      }
-      try {
-        const event = {
-          ...(await NostrTools.getBlankEvent()),
-          kind: 4,
-          created_at: Math.floor(Date.now() / 1000),
-          tags: [["p", dm.to]],
-          pubkey: this.account.pubkey,
-        };
-        event.content = await NostrTools.nip04.encrypt(
-          this.account.privkey,
-          dm.to,
-          dm.message
-        );
-
-        event.id = NostrTools.getEventHash(event);
-        event.sig = await NostrTools.signEvent(event, this.account.privkey);
-
-        await this._sendDmEvent(event);
-        event.content = dm.message;
-        this._persistDMEvent(event, dm.to);
-      } catch (error) {
-        this.$q.notify({
-          type: "warning",
-          message: "Failed to send message!",
-        });
-      }
-    },
-
-    async _sendDmEvent(event) {
-      const toPubkey = event.tags.filter((t) => t[0] === "p").map((t) => t[1]);
-
-      let relays = this._findRelaysForMerchant(toPubkey[0]);
-      if (!relays?.length) {
-        relays = [...defaultRelays];
-      }
-      await this._publishEventToRelays(event, relays);
-    },
-
-    _noDmEvents() {
-      const dms = this.$q.localStorage
-        .getAllKeys()
-        .filter((key) => key.startsWith("nostrmarket.dm"));
-
-      return dms.length === 0;
-    },
-
-    /////////////////////////////////////////////////////////// ORDERS ///////////////////////////////////////////////////////////
-
-    async placeOrder({ event, order, cartId }) {
-      if (!this.account?.privkey) {
-        this.openAccountDialog();
-        return;
-      }
-      try {
-        this.activeOrderId = order.id;
-        event.content = await NostrTools.nip04.encrypt(
-          this.account.privkey,
-          this.checkoutStall.pubkey,
-          JSON.stringify(order)
-        );
-
-        event.id = NostrTools.getEventHash(event);
-        event.sig = await NostrTools.signEvent(event, this.account.privkey);
-
-        await this._sendOrderEvent(event);
-        this._persistOrderUpdate(
-          this.checkoutStall.pubkey,
-          event.created_at,
-          order
-        );
-        this.removeCart(cartId);
-        this.setActivePage("shopping-cart-list");
-      } catch (error) {
-        console.warn(error);
-        this.$q.notify({
-          type: "warning",
-          message: "Failed to place order!",
-        });
-      }
-    },
-
-    async _sendOrderEvent(event) {
-      const merchantPubkey = event.tags
-        .filter((t) => t[0] === "p")
-        .map((t) => t[1]);
-
-      const merchantRelays = this._findRelaysForMerchant(merchantPubkey[0]);
-      const relayCount = await this._publishEventToRelays(
-        event,
-        merchantRelays
-      );
-      this.$q.notify({
-        type: relayCount ? "positive" : "warning",
-        message: relayCount
-          ? `The order has been placed (${relayCount} relays)!`
-          : "Order could not be placed",
-      });
-      this.qrCodeDialog = {
-        data: {
-          payment_request: null,
-          message: null,
-        },
-        dismissMsg: null,
-        show: !!relayCount,
-      };
-    },
-
-    _handlePaymentRequest(json) {
-      if (json.id && json.id !== this.activeOrderId) {
-        // not for active order, store somewehre else
-        return;
-      }
-      if (!json.payment_options?.length) {
-        this.qrCodeDialog.data.message = json.message || "Unexpected error";
-        return;
-      }
-
-      const paymentRequest = json.payment_options.find(
-        (o) => o.type == "ln"
-      ).link;
-      if (!paymentRequest) return;
-      this.qrCodeDialog.data.payment_request = paymentRequest;
-      this.qrCodeDialog.dismissMsg = this.$q.notify({
-        timeout: 10000,
-        message: "Waiting for payment...",
-      });
-    },
-
-    _handleOrderStatusUpdate(jsonData) {
-      if (jsonData.id && jsonData.id !== this.activeOrderId) {
-        // not for active order, store somewehre else
-        return;
-      }
-      if (this.qrCodeDialog.dismissMsg) {
-        this.qrCodeDialog.dismissMsg();
-      }
-      this.qrCodeDialog.show = false;
-      const message = jsonData.shipped
-        ? "Order shipped"
-        : jsonData.paid
-        ? "Order paid"
-        : "Order notification";
-      this.$q.notify({
-        type: "positive",
-        message: message,
-        caption: jsonData.message || "",
-      });
-    },
-
-    async _handleStructuredDm(event, peerPubkey) {
-      try {
-        const jsonData = JSON.parse(event.content);
-        if ([0, 1, 2].indexOf(jsonData.type) !== -1) {
-          this._persistOrderUpdate(peerPubkey, event.created_at, jsonData);
-        }
-        if (jsonData.type === 1) {
-          this._handlePaymentRequest(jsonData);
-        } else if (jsonData.type === 2) {
-          this._handleOrderStatusUpdate(jsonData);
-        }
-      } catch (e) {
-        console.warn("Unable to handle incomming DM", e);
-      }
-    },
-
-    /////////////////////////////////////////////////////////// PERSIST ///////////////////////////////////////////////////////////
-
-    _restoreFromStorage() {
-      this.markets = this.$q.localStorage.getItem("nostrmarket.markets") || [];
-      this.allMarketsSelected = !this.markets.find((m) => !m.selected);
-
-      this.shoppingCarts =
-        this.$q.localStorage.getItem("nostrmarket.shoppingCarts") || [];
-
-      this.profiles =
-        this.$q.localStorage.getItem("nostrmarket.profiles") || [];
-
-      this.account =
-        this.$q.localStorage.getItem("nostrmarket.account") || null;
-
-      this.stalls = this.$q.localStorage.getItem("nostrmarket.stalls") || [];
-      this.products =
-        this.$q.localStorage.getItem("nostrmarket.products") || [];
-
-      const uiConfig = this.$q.localStorage.getItem(
-        "nostrmarket.marketplaceConfig"
-      ) || {
-        ui: { darkMode: false },
-      };
-
-      const sort = this.$q.localStorage.getItem("nostrmarket.sort") || {};
-      this.sort.by = sort.by || this.sort.by;
-      this.sort.order = sort.order || this.sort.order;
-
-      // trigger the `watch` logic
-      this.config = {
-        ...this.config,
-        opts: { ...this.config.opts, ...uiConfig },
-      };
-
-      this._applyUiConfigs(this.config.opts);
-
-      const prefix = "nostrmarket.orders.";
-      const orderKeys = this.$q.localStorage
-        .getAllKeys()
-        .filter((k) => k.startsWith(prefix));
-      orderKeys.forEach((k) => {
-        const pubkey = k.substring(prefix.length);
-        this.orders[pubkey] = this.$q.localStorage.getItem(k);
-      });
-
-      const readNotes =
-        this.$q.localStorage.getItem("nostrmarket.readNotes") || {};
-      this.readNotes = { ...this.readNotes, ...readNotes };
-    },
-    _persistStallsAndProducts() {
-      this.$q.localStorage.set("nostrmarket.stalls", this.stalls);
-      this.$q.localStorage.set("nostrmarket.products", this.products);
-    },
-
-    _persistRelaysData() {
-      this.$q.localStorage.set(
-        "nostrmarket.relays",
-        Object.values(this.relaysData)
-          .filter((r) => !!r)
-          .map((relayData) => ({
-            lastEventAt: relayData.lastEventAt,
-            relayUrl: relayData.relayUrl,
-          }))
-      );
-    },
-
-    _persistDMEvent(event, peerPubkey) {
-      const dms = this.$q.localStorage.getItem(
-        `nostrmarket.dm.${peerPubkey}`
-      ) || {
-        events: [],
-        lastCreatedAt: 0,
-      };
-      const existingEvent = dms.events.find((e) => e.id === event.id);
-      if (existingEvent) return;
-
-      dms.events.push(event);
-      dms.events.sort((a, b) => a.created_at - b.created_at);
-      dms.lastCreatedAt = dms.events[dms.events.length - 1].created_at;
-      dms.peerPubkey = peerPubkey;
-
-      this.$q.localStorage.set(`nostrmarket.dm.${peerPubkey}`, dms);
-
-      if (this.dmEvents?.peerPubkey === peerPubkey) {
-        this.dmEvents =
-          this.$q.localStorage.getItem(`nostrmarket.dm.${peerPubkey}`) || {};
-      } else {
-        // just to force refresh
-        this.dmEvents = { ...this.dmEvents };
-      }
-    },
-
-    _persistOrderUpdate(pubkey, eventCreatedAt, orderUpdate) {
-      let orders =
-        this.$q.localStorage.getItem(`nostrmarket.orders.${pubkey}`) || [];
-      const orderIndex = orders.findIndex((o) => o.id === orderUpdate.id);
-
-      if (orderIndex === -1) {
-        orders.unshift({
-          ...orderUpdate,
-          eventCreatedAt,
-          createdAt: eventCreatedAt,
-        });
-        this.orders[pubkey] = orders;
-        this.orders = { ...this.orders };
-        this.$q.localStorage.set(`nostrmarket.orders.${pubkey}`, orders);
-        return;
-      }
-
-      let order = orders[orderIndex];
-
-      if (orderUpdate.type === 0) {
-        order.createdAt = eventCreatedAt;
-        order = {
-          ...order,
-          ...orderUpdate,
-          message: order.message || orderUpdate.message,
-        };
-      } else {
-        order =
-          order.eventCreatedAt < eventCreatedAt
-            ? { ...order, ...orderUpdate }
-            : { ...orderUpdate, ...order };
-      }
-
-      orders.splice(orderIndex, 1, order);
-      this.orders[pubkey] = orders;
-      this.orders = { ...this.orders };
-      this.$q.localStorage.set(`nostrmarket.orders.${pubkey}`, orders);
-    },
-
-    /////////////////////////////////////////////////////////// MISC ///////////////////////////////////////////////////////////
-
-    navigateTo(page, opts = { stall: null, product: null, pubkey: null }) {
-      console.log("### navigateTo", page, opts);
-
-      const { stall, product, pubkey } = opts;
-      const url = new URL(window.location);
-
-      const merchantPubkey =
-        pubkey || this.stalls.find((s) => s.id == stall)?.pubkey;
-      url.searchParams.set("merchant", merchantPubkey);
-
-      if (page === "stall" || page === "product") {
-        if (stall) {
-          this.activeStall = stall;
-          this.setActivePage("customer-stall");
-          url.searchParams.set("stall", stall);
-
-          this.activeProduct = product;
-          if (product) {
-            url.searchParams.set("product", product);
-          } else {
-            url.searchParams.delete("product");
-          }
-        }
-      } else {
-        this.activeMarket = null;
-        this.activeStall = null;
-        this.activeProduct = null;
-
-        url.searchParams.delete("merchant");
-        url.searchParams.delete("stall");
-        url.searchParams.delete("product");
-
-        this.setActivePage(page);
-      }
-
-      window.history.pushState({}, "", url);
-      // this.activePage = page
-    },
-    copyUrl: function () {
-      this.copyText(window.location);
-    },
-    copyText: function (text) {
-      var notify = this.$q.notify;
-      copyToClipboard(text).then(function () {
-        notify({
-          message: "Copied to clipboard!",
-          position: "bottom",
-        });
-      });
-    },
-    getAmountFormated(amount, unit = "USD") {
-      return formatCurrency(amount, unit);
-    },
-
-    setActivePage(page = "market") {
-      this.activePage = page;
-    },
-    transitToPage(pageName) {
-      this.activePage = "loading";
-      setTimeout(() => this.setActivePage(pageName), 100);
-    },
-
-    showInvoiceQr(invoice) {
-      if (!invoice) return;
-      this.qrCodeDialog = {
-        data: {
-          payment_request: invoice,
-        },
-        dismissMsg: null,
-        show: true,
-      };
-    },
-
-    toggleCategoryFilter(category) {
-      const index = this.filterData.categories.indexOf(category);
-      if (index === -1) {
-        this.filterData.categories.push(category);
-      } else {
-        this.filterData.categories.splice(index, 1);
-      }
-    },
-
-    hasCategory(categories = []) {
-      if (!this.filterData.categories?.length) return true;
-      for (const cat of categories) {
-        if (this.filterData.categories.indexOf(cat.toLowerCase()) !== -1)
-          return true;
-      }
-      return false;
-    },
-    allStallCatgories(stallId) {
-      const categories = this.products
-        .filter((p) => p.stall_id === stallId)
-        .map((p) => p.categories)
-        .flat()
-        .filter((c) => !!c);
-      return Array.from(new Set(categories));
-    },
-    allStallImages(stallId) {
-      const images = this.products
-        .filter((p) => p.stall_id === stallId)
-        .map((p) => p.images && p.images[0])
-        .filter((i) => !!i);
-      return Array.from(new Set(images));
-    },
-
-    sanitizeImageSrc(src, defaultValue) {
-      try {
-        if (src) {
-          new URL(src);
-          return src;
-        }
-      } catch {}
-      return defaultValue;
-    },
-
-    markNoteAsRead(noteId) {
-      this.readNotes[noteId] = true;
-      this.$q.localStorage.set("nostrmarket.readNotes", this.readNotes);
-    },
-    focusOnElement(elementId) {
-      document.getElementById(elementId)?.scrollIntoView();
-      this.showFilterDetails = true;
-    },
-    sortProducts(by, order = "asc") {
-      this.sort.by = by;
-      this.sort.order = order;
-      this.$q.localStorage.set("nostrmarket.sort", { by, order });
-    },
-  },
+    await addUpdateMarket(params.get("naddr"));
+    await _handleQueryParams(params);
+    markets.value.forEach((market) => addUpdateMarket(market.naddr, false));
+    await addUpdateMarket(params.get("naddr"));
+
+    // NOTE: automatically add the default market
+    await addUpdateMarket(defaultMarketNaddr.value, false);
+
+    isLoading.value = false;
+    await loadRelaysData();
+    startRelaysHealtCheck();
+  } catch (error) {
+    console.error("Failed to initialize:", error);
+  }
 });
+
+watch(
+  () => config,
+  (n, _) => {
+    if (!n?.opts?.ui?.banner) {
+      bannerImage.value = defaultBanner.value;
+    } else {
+      bannerImage.value = null;
+      setTimeout(() => {
+        bannerImage.value = sanitizeImageSrc(
+          n?.opts?.ui?.banner,
+          defaultBanner.value
+        );
+      }, 1);
+    }
+
+    if (!n?.opts?.ui?.picture) {
+      logoImage.value = defaultLogo.value;
+    } else {
+      logoImage.value = null;
+      setTimeout(() => {
+        logoImage.value = sanitizeImageSrc(
+          n?.opts?.ui?.picture,
+          defaultLogo.value
+        );
+      }, 1);
+    }
+  }
+);
+
+watch(
+  () => searchText.value,
+  async (n, o) => {
+    if (!n) return;
+    if (n.toLowerCase().startsWith("naddr")) {
+      try {
+        const { type, data } = NostrTools.nip19.decode(n);
+        if (type !== "naddr" || data.kind !== 30019) return;
+
+        $q.dialog({
+          title: "Confirmation",
+          message: "Do you want to import this market profile?",
+          ok: "Yes",
+          cancel: "No",
+        }).onOk(async () => {
+          searchText.value = "";
+          await addUpdateMarket(n);
+        });
+      } catch (error) {
+        console.error("Error decoding naddr:", error);
+      }
+    }
+  }
+);
+
+const copyUrl = () => {
+  copyText(window.location);
+};
+
+const copyText = (text) => {
+  var notify = $q.notify;
+  copyToClipboard(text).then(function () {
+    notify({
+      message: "Copied to clipboard!",
+      position: "bottom",
+    });
+  });
+};
 </script>
+
+<style scoped>
+/* ... existing styles ... */
+
+.qr-container {
+  position: relative;
+}
+
+.lightning-bolt {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 50px;
+  text-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  text-shadow:
+    0px 0px 1px rgba(0, 0, 0, 1),
+    0 0 10px rgba(255, 145, 0, 0.9);
+}
+
+@media (max-width: 768px) {
+  .mobile-fixed-bottom {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: white; /* Optional: to ensure the background is visible */
+    z-index: 1000; /* Ensure it appears above other content */
+    padding: 10px; /* Optional: add some padding */
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1); /* Optional: add a shadow for better visibility */
+  }
+}
+</style>

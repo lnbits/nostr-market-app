@@ -58,7 +58,7 @@
                   >
                 </span>
                 <span v-else>
-                  <span class="text-h6">{{ product.formatedPrice }}</span>
+                  <span class="text-h6">{{ product.formattedPrice }}</span>
                 </span>
                 <span
                   class="q-ml-md text-caption text-green-8 text-weight-bolder q-mt-md"

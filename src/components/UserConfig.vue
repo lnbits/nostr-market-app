@@ -41,7 +41,7 @@
           <q-input
             v-model="accountData.nsec"
             readonly
-            disbled
+            disabled
             outlined
             type="password"
             label="Private Key"
