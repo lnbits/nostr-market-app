@@ -82,7 +82,7 @@
               <strong>Subtotal:</strong>
             </div>
             <div class="col-xs-12 col-sm-12 col-md-4">
-              <strong>{{ formatCurrency(cartTotal, stall.currency) }}</strong>
+              <strong>{{ formatCurrency(cartSubtotal, stall.currency) }}</strong>
             </div>
             <div class="col-xs-12 col-sm-12 col-md-4"></div>
           </div>
@@ -175,8 +175,11 @@
 </template>
 
 <script>
-import { defineComponent } from "vue";
+import { defineComponent, toRefs } from "vue";
 import UserProfile from "./UserProfile.vue";
+import { useMarketStore } from "../stores/marketStore.js"
+const marketStore = useMarketStore()
+const { activeCartDetails } = toRefs(marketStore)
 
 export default defineComponent({
   name: "ShoppingCartCheckout",
@@ -184,6 +187,7 @@ export default defineComponent({
   components: { UserProfile },
   data: function () {
     return {
+      activeCartDetails,
       orderConfirmed: false,
       paymentMethod: "ln",
       shippingZone: null,
@@ -210,13 +214,19 @@ export default defineComponent({
     };
   },
   computed: {
-    cartTotal() {
-      if (!this.cart.products?.length) return 0;
-      return this.cart.products.reduce((t, p) => p.price * p.orderedQuantity + t, 0);
+    cartSubtotal() {
+      if (!this.cart.products?.length) {
+        this.activeCartDetails.cartSubtotal = 0;
+        return 0;
+      }
+      const total = this.cart.products.reduce((t, p) => p.price * p.orderedQuantity + t, 0);
+      this.activeCartDetails.cartSubtotal = total;
+      return total;
     },
     cartTotalWithShipping() {
-      if (!this.shippingZone) return this.cartTotal;
-      return this.cartTotal + this.shippingZone.cost;
+      // NOTE: this assumes the shipping currency is the same as the cart currency
+      if (!this.shippingZone) return this.cartSubtotal;
+      return this.cartSubtotal + this.shippingZone.cost;
     },
     shippingZoneLabel() {
       if (!this.shippingZone) {
@@ -235,8 +245,9 @@ export default defineComponent({
     formatCurrency: function (value, unit) {
       return formatCurrency(value, unit);
     },
-    selectShippingZone: function (zone) {
-      this.shippingZone = zone;
+    selectShippingZone: function (shippingZone) {
+      this.shippingZone = shippingZone;
+      this.activeCartDetails.shippingZone = shippingZone
     },
 
     confirmOrder: function () {
@@ -274,6 +285,7 @@ export default defineComponent({
           return { product_id: p.id, quantity: p.orderedQuantity };
         }),
         shipping_id: this.shippingZone.id,
+        // here it is
         type: 0,
       };
       const created_at = Math.floor(Date.now() / 1000);
@@ -289,6 +301,7 @@ export default defineComponent({
         pubkey: this.customerPubkey,
       };
 
+      // order details included in here
       this.$emit("place-order", { event, order, cartId: this.cart.id });
     },
     goToShoppingCart: function () {
@@ -300,7 +313,10 @@ export default defineComponent({
   },
   created() {
     if (this.stall.shipping?.length === 1) {
-      this.shippingZone = this.stall.shipping[0];
+      const shippingZone = this.stall.shipping[0];
+      this.shippingZone = shippingZone
+      this.activeCartDetails.shippingZone = shippingZone
+      this.activeCartDetails.currency = this.stall.currency
     }
   },
 });

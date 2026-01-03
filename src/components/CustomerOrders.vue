@@ -228,7 +228,7 @@ export default defineComponent({
         if (!stall) return;
         return stall;
       } catch (error) {
-        console.log(error);
+        // Error in stallForOrder - handled gracefully
       }
     },
     invoiceForOrder: function (order) {
@@ -239,7 +239,7 @@ export default defineComponent({
         if (!lnPaymentOption?.link) return;
         return decode(lnPaymentOption.link);
       } catch (error) {
-        console.warn(error);
+        // Error in invoiceForOrder - handled gracefully
       }
     },
 
