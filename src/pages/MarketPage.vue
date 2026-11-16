@@ -653,6 +653,7 @@ export default defineComponent({
 
       activePage: "market",
       activeOrderId: null,
+      activeOrderMerchant: null,
       dmSubscriptions: {},
       allMarketsSelected: false,
 
@@ -1836,6 +1837,7 @@ export default defineComponent({
       }
       try {
         this.activeOrderId = order.id;
+        this.activeOrderMerchant = this.checkoutStall.pubkey;
         event.content = await NostrTools.nip04.encrypt(
           this.account.privkey,
           this.checkoutStall.pubkey,
@@ -1936,9 +1938,13 @@ export default defineComponent({
         if ([0, 1, 2].indexOf(jsonData.type) !== -1) {
           this._persistOrderUpdate(peerPubkey, event.created_at, jsonData);
         }
-        if (jsonData.type === 1) {
+        const fromActiveMerchant =
+          event.pubkey === this.activeOrderMerchant &&
+          peerPubkey === this.activeOrderMerchant &&
+          jsonData.id === this.activeOrderId;
+        if (jsonData.type === 1 && fromActiveMerchant) {
           this._handlePaymentRequest(jsonData);
-        } else if (jsonData.type === 2) {
+        } else if (jsonData.type === 2 && fromActiveMerchant) {
           this._handleOrderStatusUpdate(jsonData);
         }
       } catch (e) {
